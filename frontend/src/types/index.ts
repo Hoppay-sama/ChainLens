@@ -1,78 +1,69 @@
 export interface Product {
-  id: string
+  id: number
+  product_id: string
   name: string
-  description?: string
-  origin: string
-  manufacturer: string
-  createdAt: number
-  status: 'created' | 'in_transit' | 'delivered' | 'flagged'
-  currentHolder: string
-  metadata?: Record<string, string>
+  description: string | null
+  metadata_uri: string | null
+  manufacturer_address: string
+  registered_at: string  // ISO datetime from backend
+  block_number: number
+  tx_hash: string
 }
 
 export interface Checkpoint {
-  id: number | string
+  id: number
+  product_id: string
   location: string
-  timestamp: number
-  actor: string
-  action: string
-  verified: boolean
-  metadata?: Record<string, string>
+  status: string  // "0"=Created, "1"=InTransit, "2"=AtCheckpoint, "3"=Delivered
+  handler_address: string
+  notes: string | null
+  timestamp: string  // ISO datetime
+  block_number: number
+  tx_hash: string
 }
 
 export interface CustodyTransfer {
-  from: string
-  to: string
-  timestamp: number
-  transactionHash?: string
+  id: number
+  product_id: string
+  from_address: string
+  to_address: string
+  timestamp: string
+  block_number: number
+  tx_hash: string
 }
 
-export interface Shipment {
-  id: string
-  productId: string
-  origin: string
-  destination: string
-  status: string
-  createdAt: number
-  estimatedDelivery: number
-  actualDelivery?: number
-  carrier: string
-  checkpoints: Checkpoint[]
+export interface ProductDetail {
+  product: Product
+  history: Checkpoint[]
+  transfers: CustodyTransfer[]
 }
 
 export interface KPIData {
-  totalProducts: number
-  activeShipments: number
-  avgTransitTime: number
-  onTimeRate: number
-  totalProductsChange: string
-  activeShipmentsChange: string
-  avgTransitTimeChange: string
-  onTimeRateChange: string
+  avg_transit_time_hours: number | null
+  on_time_rate_percent: number | null
+  total_shipments: number
+  active_shipments: number
+  delivered_shipments: number
+  avg_checkpoints_per_shipment: number
+  bottleneck_locations: BottleneckLocation[]
+}
+
+export interface BottleneckLocation {
+  location: string
+  avg_dwell_hours: number
+  incident_count: number
 }
 
 export interface Anomaly {
-  id: string
-  type: string
+  product_id: string
+  transit_time_hours: number
+  z_score: number
   severity: 'low' | 'medium' | 'high'
-  route: string
-  expected: string
-  actual: string
-  detected: string
-  shipmentId: string
+  flagged_at: string
 }
 
 export interface VerificationResult {
-  productId: string
-  name: string
-  verified: boolean
-  blockNumber: number
-  transactionHash: string
-  verifiedAt: number
-  history: {
-    action: string
-    actor: string
-    timestamp: number
-    hash: string
-  }[]
+  is_registered: boolean
+  is_delivered: boolean
+  checkpoint_count: number
 }

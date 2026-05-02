@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { ScanLine, Package, BarChart3, ShieldCheck, Hexagon } from 'lucide-react'
+import { Package, BarChart3, ShieldCheck, Hexagon } from 'lucide-react'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: BarChart3 },

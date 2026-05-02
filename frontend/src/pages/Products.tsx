@@ -3,89 +3,61 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import { Search, MapPin, User, ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react'
-import { formatAddress, formatTimestamp } from '@/utils/formatters'
+import { useProduct, useProductHistory, useProductTransfers } from '@/hooks/useApi'
+import { Search, MapPin, User, ArrowRight, CheckCircle2, ShieldCheck, AlertCircle, Package } from 'lucide-react'
+import { formatAddress, formatDate } from '@/utils/formatters'
+import type { Checkpoint, CustodyTransfer } from '@/types'
 
-// Mock data for demonstration
-const mockProduct = {
-  id: 'PROD-8842',
-  name: 'Premium Organic Coffee Beans',
-  origin: 'Ethiopia, Sidamo Region',
-  manufacturer: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-  createdAt: 1714588800,
-  status: 'in_transit' as const,
-  currentHolder: '0x8ba1f109551bD432803012645Hac136c82C3e8C9',
-  checkpoints: [
-    {
-      id: 1,
-      location: 'Sidamo Farm, Ethiopia',
-      timestamp: 1714588800,
-      actor: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-      action: 'Harvested & Processed',
-      verified: true,
-    },
-    {
-      id: 2,
-      location: 'Addis Ababa Export Hub',
-      timestamp: 1714675200,
-      actor: '0x123d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-      action: 'Quality Inspection Passed',
-      verified: true,
-    },
-    {
-      id: 3,
-      location: 'Port of Djibouti',
-      timestamp: 1714761600,
-      actor: '0x456d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-      action: 'Shipped via Ocean Freight',
-      verified: true,
-    },
-    {
-      id: 4,
-      location: 'Rotterdam Port, Netherlands',
-      timestamp: 1714934400,
-      actor: '0x789d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-      action: 'Customs Cleared',
-      verified: true,
-    },
-    {
-      id: 5,
-      location: 'Berlin Distribution Center',
-      timestamp: 1715020800,
-      actor: '0x8ba1f109551bD432803012645Hac136c82C3e8C9',
-      action: 'In Transit to Retailer',
-      verified: false,
-    },
-  ],
-  custodyHistory: [
-    { from: '0x742d35...0bEb', to: '0x123d35...0bEb', timestamp: 1714675200 },
-    { from: '0x123d35...0bEb', to: '0x456d35...0bEb', timestamp: 1714761600 },
-    { from: '0x456d35...0bEb', to: '0x789d35...0bEb', timestamp: 1714934400 },
-    { from: '0x789d35...0bEb', to: '0x8ba1f1...3e8C9', timestamp: 1715020800 },
-  ],
+const statusLabels: Record<string, string> = {
+  '0': 'Created',
+  '1': 'In Transit',
+  '2': 'At Checkpoint',
+  '3': 'Delivered',
+}
+
+const statusVariant: Record<string, 'default' | 'blue' | 'orange' | 'success'> = {
+  '0': 'default',
+  '1': 'blue',
+  '2': 'orange',
+  '3': 'success',
 }
 
 export default function Products() {
   const [searchId, setSearchId] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [product, setProduct] = useState<typeof mockProduct | null>(null)
+  const [submittedId, setSubmittedId] = useState('')
+
+  const {
+    data: productDetail,
+    isLoading: productLoading,
+    error: productError,
+  } = useProduct(submittedId)
+
+  const {
+    data: historyData,
+    isLoading: historyLoading,
+  } = useProductHistory(submittedId)
+
+  const {
+    data: transfersData,
+    isLoading: transfersLoading,
+  } = useProductTransfers(submittedId)
 
   const handleSearch = () => {
     if (!searchId.trim()) return
-    setLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      setProduct(mockProduct)
-      setLoading(false)
-    }, 800)
+    setSubmittedId(searchId.trim())
   }
 
-  const statusVariant = {
-    created: 'default' as const,
-    in_transit: 'blue' as const,
-    delivered: 'success' as const,
-    flagged: 'error' as const,
-  }
+  const product = productDetail?.product
+  const history: Checkpoint[] = historyData ?? []
+  const transfers: CustodyTransfer[] = transfersData ?? []
+
+  const isDelivered = history.some((c) => c.status === '3')
+
+  const loading = productLoading || historyLoading || transfersLoading
+
+  const isNotFound =
+    productError instanceof Error &&
+    (productError.message.includes('404') || productError.message.includes('not found'))
 
   return (
     <div className="animate-fade-in space-y-8">
@@ -120,8 +92,34 @@ export default function Products() {
         </div>
       </Card>
 
+      {/* Not Found */}
+      {isNotFound && (
+        <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 p-4">
+          <AlertCircle className="h-5 w-5 shrink-0 text-red-400" />
+          <div>
+            <p className="font-medium text-red-400">Product Not Found</p>
+            <p className="text-sm text-red-400/70">
+              No product with ID &quot;{submittedId}&quot; was found on the blockchain.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Error (other than 404) */}
+      {productError && !isNotFound && (
+        <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 p-4">
+          <AlertCircle className="h-5 w-5 shrink-0 text-red-400" />
+          <div>
+            <p className="font-medium text-red-400">Error</p>
+            <p className="text-sm text-red-400/70">
+              {productError instanceof Error ? productError.message : 'Failed to load product'}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Product Details */}
-      {product && (
+      {product && !loading && (
         <div className="space-y-6">
           {/* Product Info Card */}
           <Card variant="accent">
@@ -129,25 +127,24 @@ export default function Products() {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <h2 className="font-mono text-xl font-semibold text-text">
-                    {product.id}
+                    {product.product_id}
                   </h2>
-                  <Badge variant={statusVariant[product.status]}>
-                    {product.status.replace('_', ' ')}
+                  <Badge variant={isDelivered ? 'success' : 'blue'}>
+                    {isDelivered ? 'Delivered' : 'In Transit'}
                   </Badge>
                 </div>
                 <h3 className="text-lg text-text">{product.name}</h3>
+                {product.description && (
+                  <p className="text-sm text-muted">{product.description}</p>
+                )}
                 <div className="flex flex-wrap gap-4 text-sm text-muted">
                   <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    {product.origin}
-                  </div>
-                  <div className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    Manufacturer: {formatAddress(product.manufacturer)}
+                    Manufacturer: {formatAddress(product.manufacturer_address)}
                   </div>
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-accent" />
-                    Created {formatTimestamp(product.createdAt)}
+                    Registered {formatDate(product.registered_at)}
                   </div>
                 </div>
               </div>
@@ -162,67 +159,83 @@ export default function Products() {
             {/* Shipment Timeline */}
             <Card className="lg:col-span-2">
               <h3 className="mb-6 font-semibold text-text">Shipment Timeline</h3>
-              <div className="relative space-y-0">
-                {/* Vertical line */}
-                <div className="absolute left-[19px] top-2 bottom-2 w-px bg-border" />
-                {product.checkpoints.map((checkpoint, index) => (
-                  <div key={checkpoint.id} className="relative flex gap-4 pb-8 last:pb-0">
-                    <div
-                      className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 ${
-                        checkpoint.verified
-                          ? 'border-accent bg-accent/10'
-                          : 'border-muted bg-surface2'
-                      }`}
-                    >
-                      {checkpoint.verified ? (
-                        <CheckCircle2 className="h-4 w-4 text-accent" />
-                      ) : (
-                        <div className="h-2.5 w-2.5 rounded-full bg-muted" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1 space-y-1 pt-1">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-text">{checkpoint.action}</p>
-                        <span className="font-mono text-xs text-muted">
-                          {formatTimestamp(checkpoint.timestamp)}
-                        </span>
+              {history.length === 0 ? (
+                <p className="text-sm text-muted">No checkpoint history available.</p>
+              ) : (
+                <div className="relative space-y-0">
+                  {/* Vertical line */}
+                  <div className="absolute left-[19px] top-2 bottom-2 w-px bg-border" />
+                  {history.map((checkpoint) => (
+                    <div key={checkpoint.id} className="relative flex gap-4 pb-8 last:pb-0">
+                      <div
+                        className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 ${
+                          checkpoint.status === '3'
+                            ? 'border-accent bg-accent/10'
+                            : 'border-muted bg-surface2'
+                        }`}
+                      >
+                        {checkpoint.status === '3' ? (
+                          <CheckCircle2 className="h-4 w-4 text-accent" />
+                        ) : (
+                          <div className="h-2.5 w-2.5 rounded-full bg-muted" />
+                        )}
                       </div>
-                      <p className="text-sm text-muted">{checkpoint.location}</p>
-                      <p className="font-mono text-xs text-muted/60">
-                        By {formatAddress(checkpoint.actor)}
-                      </p>
+                      <div className="min-w-0 flex-1 space-y-1 pt-1">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-text">
+                            {checkpoint.notes || statusLabels[checkpoint.status] || 'Update'}
+                          </p>
+                          <span className="font-mono text-xs text-muted">
+                            {formatDate(checkpoint.timestamp)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {checkpoint.location}
+                        </p>
+                        <Badge variant={statusVariant[checkpoint.status] || 'default'} className="mt-1">
+                          {statusLabels[checkpoint.status] || checkpoint.status}
+                        </Badge>
+                        <p className="font-mono text-xs text-muted/60">
+                          By {formatAddress(checkpoint.handler_address)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </Card>
 
             {/* Custody History */}
             <Card>
               <h3 className="mb-6 font-semibold text-text">Custody Transfers</h3>
-              <div className="space-y-4">
-                {product.custodyHistory.map((transfer, index) => (
-                  <div
-                    key={index}
-                    className="rounded-lg bg-surface2 p-3 transition-colors hover:bg-surface2/80"
-                  >
-                    <div className="flex items-center gap-2 text-xs text-muted">
-                      <span className="font-mono">{transfer.from}</span>
-                      <ArrowRight className="h-3 w-3 text-accent" />
-                      <span className="font-mono">{transfer.to}</span>
+              {transfers.length === 0 ? (
+                <p className="text-sm text-muted">No custody transfers available.</p>
+              ) : (
+                <div className="space-y-4">
+                  {transfers.map((transfer) => (
+                    <div
+                      key={transfer.id}
+                      className="rounded-lg bg-surface2 p-3 transition-colors hover:bg-surface2/80"
+                    >
+                      <div className="flex items-center gap-2 text-xs text-muted">
+                        <span className="font-mono">{formatAddress(transfer.from_address)}</span>
+                        <ArrowRight className="h-3 w-3 text-accent" />
+                        <span className="font-mono">{formatAddress(transfer.to_address)}</span>
+                      </div>
+                      <p className="mt-2 text-xs text-muted/60">
+                        {formatDate(transfer.timestamp)}
+                      </p>
                     </div>
-                    <p className="mt-2 text-xs text-muted/60">
-                      {formatTimestamp(transfer.timestamp)}
-                    </p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </div>
         </div>
       )}
 
-      {!product && !loading && (
+      {!product && !loading && !productError && !submittedId && (
         <div className="flex flex-col items-center justify-center rounded-card border border-dashed border-border py-16 text-center">
           <Package className="h-12 w-12 text-muted/30" />
           <p className="mt-4 text-muted">Enter a product ID to view its details</p>

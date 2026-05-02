@@ -29,3 +29,15 @@ export function formatNumber(num: number): string {
   if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`
   return num.toString()
 }
+
+export function formatDate(isoString: string): string {
+  if (!isoString) return 'N/A'
+  const date = new Date(isoString)
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
