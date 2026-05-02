@@ -9,6 +9,7 @@ class Product(Base):
     product_id = Column(String, index=True, nullable=False, unique=True)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
+    metadata_uri = Column(String, nullable=True)
     manufacturer_address = Column(String, nullable=False)
     registered_at = Column(DateTime, nullable=False)
     block_number = Column(BigInteger, nullable=False)
