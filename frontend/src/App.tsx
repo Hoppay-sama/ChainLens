@@ -1,0 +1,50 @@
+import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
+import '@rainbow-me/rainbowkit/styles.css'
+import { WagmiProvider } from 'wagmi'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { rainbowKitConfig } from './config/wagmi'
+import Layout from './components/Layout'
+import Dashboard from './pages/Dashboard'
+import Products from './pages/Products'
+import Analytics from './pages/Analytics'
+import Verify from './pages/Verify'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
+function App() {
+  return (
+    <WagmiProvider config={rainbowKitConfig}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider
+          theme={darkTheme({
+            accentColor: '#c8f060',
+            accentColorForeground: '#0d0d0d',
+            borderRadius: 'medium',
+            fontStack: 'system',
+          })}
+        >
+          <BrowserRouter>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/verify" element={<Verify />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
+  )
+}
+
+export default App

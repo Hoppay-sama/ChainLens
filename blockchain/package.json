@@ -1,0 +1,25 @@
+{
+  "name": "chainlens-blockchain",
+  "version": "1.0.0",
+  "description": "Smart contract layer for ChainLens supply chain traceability",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.ts",
+    "coverage": "hardhat coverage"
+  },
+  "keywords": [
+    "blockchain",
+    "hardhat",
+    "solidity",
+    "supply-chain"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.12.1",
+    "hardhat": "^2.22.4"
+  }
+}
