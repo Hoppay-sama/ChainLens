@@ -25,8 +25,9 @@ export default {
         serif: ['DM Serif Display', 'serif'],
       },
       borderRadius: {
-        'card': '16px',
-        'button': '12px',
+        'card': '24px',
+        'button': '16px',
+        'pill': '9999px',
       },
       boxShadow: {
         'card': '0 4px 24px rgba(0, 0, 0, 0.4)',
@@ -34,6 +35,7 @@ export default {
         'glow': '0 0 20px rgba(200, 240, 96, 0.15)',
         'glow-blue': '0 0 20px rgba(96, 208, 240, 0.15)',
         'glow-lg': '0 0 40px rgba(200, 240, 96, 0.1)',
+        'float': '0 8px 32px rgba(0, 0, 0, 0.3)',
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
@@ -41,6 +43,7 @@ export default {
         'slide-up': 'slideUp 0.4s ease-out',
         'float': 'float 6s ease-in-out infinite',
         'shimmer': 'shimmer 2s linear infinite',
+        'spin-slow': 'spin 30s linear infinite',
       },
       keyframes: {
         fadeIn: {
@@ -63,6 +66,10 @@ export default {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      },
+      backdropBlur: {
+        '2xl': '40px',
+        '3xl': '64px',
       },
     },
   },

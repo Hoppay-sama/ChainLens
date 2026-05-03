@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { rainbowKitConfig } from './config/wagmi'
-import StarField from './components/StarField'
+import EtherealBackground from './components/EtherealBackground'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
@@ -36,7 +36,7 @@ function App() {
           })}
         >
           <BrowserRouter>
-            <StarField />
+            <EtherealBackground />
             <Analytics />
             <SpeedInsights />
             <Routes>

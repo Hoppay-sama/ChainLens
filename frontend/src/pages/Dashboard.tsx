@@ -1,9 +1,7 @@
 import { useState } from 'react'
-import { motion, type Variants } from 'framer-motion'
-import Card from '@/components/ui/Card'
-import Badge from '@/components/ui/Badge'
+import { motion } from 'framer-motion'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import HeroSection from '@/components/HeroSection'
+import PremiumHero from '@/components/PremiumHero'
 import { useKPIData, useProducts } from '@/hooks/useApi'
 import { formatDate } from '@/utils/formatters'
 import {
@@ -14,6 +12,7 @@ import {
   Activity,
   AlertCircle,
   ArrowUpRight,
+  Shield,
 } from 'lucide-react'
 import {
   AreaChart,
@@ -36,15 +35,20 @@ const chartData = [
   { name: 'Sun', shipments: 290, products: 190 },
 ]
 
-const fadeInUp: Variants = {
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+}
+
+const itemVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: {
-      duration: 0.6,
-      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
-    },
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
   },
 }
 
@@ -62,15 +66,15 @@ export default function Dashboard() {
           label: 'Total Products',
           value: kpiData.total_shipments?.toLocaleString() ?? '0',
           icon: Package,
-          variant: 'accent' as const,
-          gradient: 'from-accent/20 to-accent/5',
+          color: '#c8f060',
+          gradient: 'from-accent/10 to-transparent',
         },
         {
           label: 'Active Shipments',
           value: kpiData.active_shipments?.toLocaleString() ?? '0',
           icon: Truck,
-          variant: 'blue' as const,
-          gradient: 'from-accent2/20 to-accent2/5',
+          color: '#60d0f0',
+          gradient: 'from-accent2/10 to-transparent',
         },
         {
           label: 'Avg Transit Time',
@@ -79,8 +83,8 @@ export default function Dashboard() {
               ? `${kpiData.avg_transit_time_hours.toFixed(1)} hrs`
               : 'N/A',
           icon: Clock,
-          variant: 'orange' as const,
-          gradient: 'from-accent3/20 to-accent3/5',
+          color: '#f0a060',
+          gradient: 'from-accent3/10 to-transparent',
         },
         {
           label: 'On-Time Rate',
@@ -89,8 +93,8 @@ export default function Dashboard() {
               ? `${kpiData.on_time_rate_percent.toFixed(1)}%`
               : 'N/A',
           icon: TrendingUp,
-          variant: 'purple' as const,
-          gradient: 'from-accent4/20 to-accent4/5',
+          color: '#d060f0',
+          gradient: 'from-accent4/10 to-transparent',
         },
       ]
     : []
@@ -103,33 +107,36 @@ export default function Dashboard() {
   return (
     <div className="relative">
       {/* Hero */}
-      <HeroSection />
+      <PremiumHero />
 
       {/* Dashboard Content */}
       <div className="relative mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        {/* Section Header */}
+        {/* Section Header with vertical line accent */}
         <motion.div
-          initial="hidden"
-          whileInView="visible"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-100px' }}
-          variants={fadeInUp}
-          className="mb-10 flex items-end justify-between"
+          transition={{ duration: 0.6 }}
+          className="mb-12 flex items-start gap-6"
         >
-          <div>
-            <h2 className="font-serif text-3xl text-text sm:text-4xl">
-              Supply Chain Overview
-            </h2>
-            <p className="mt-2 max-w-xl text-muted">
-              Real-time visibility into your product journey from manufacturer to consumer.
-            </p>
+          <div className="hidden h-20 w-px bg-gradient-to-b from-accent/50 to-transparent sm:block" />
+          <div className="flex flex-1 items-end justify-between">
+            <div>
+              <h2 className="font-sans text-3xl font-bold tracking-tight text-text sm:text-4xl">
+                Overview
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted">
+                Real-time visibility into your product journey from manufacturer to consumer.
+              </p>
+            </div>
+            <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-xl sm:flex">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+              </span>
+              <span className="text-xs font-medium text-muted">Live</span>
+            </div>
           </div>
-          <Badge variant="accent" className="hidden sm:flex items-center gap-1.5">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
-            </span>
-            Live
-          </Badge>
         </motion.div>
 
         {/* Loading State */}
@@ -158,74 +165,100 @@ export default function Dashboard() {
 
         {!isLoading && !error && (
           <>
-            {/* KPI Grid */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* KPI Grid - Floating Glass Cards */}
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+            >
               {kpis.map((kpi, index) => (
                 <motion.div
                   key={kpi.label}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true }}
-                  variants={fadeInUp}
-                  transition={{ delay: index * 0.1 }}
+                  variants={itemVariants}
                   onMouseEnter={() => setHoveredKpi(index)}
                   onMouseLeave={() => setHoveredKpi(null)}
                 >
-                  <Card
-                    variant={kpi.variant}
-                    className="group relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-glow"
+                  <div
+                    className="group relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-2xl transition-all duration-500 hover:border-white/10 hover:bg-white/[0.04]"
+                    style={{
+                      boxShadow: hoveredKpi === index
+                        ? `0 0 40px ${kpi.color}15, 0 8px 32px rgba(0,0,0,0.3)`
+                        : '0 4px 24px rgba(0,0,0,0.2)',
+                    }}
                   >
-                    {/* Background gradient */}
+                    {/* Gradient background on hover */}
                     <div
-                      className={`absolute inset-0 bg-gradient-to-br ${kpi.gradient} opacity-0 transition-opacity group-hover:opacity-100`}
+                      className={`absolute inset-0 bg-gradient-to-br ${kpi.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-100`}
                     />
+                    
+                    {/* Halo ring */}
+                    <div
+                      className="absolute -right-6 -top-6 h-16 w-16 rounded-full border opacity-0 transition-all duration-500 group-hover:opacity-100"
+                      style={{ borderColor: `${kpi.color}20` }}
+                    />
+                    <div
+                      className="absolute -right-4 -top-4 h-12 w-12 rounded-full border opacity-0 transition-all duration-500 group-hover:opacity-100"
+                      style={{ borderColor: `${kpi.color}10` }}
+                    />
+
                     <div className="relative">
                       <div className="flex items-start justify-between">
                         <div className="space-y-3">
-                          <p className="text-sm text-muted">{kpi.label}</p>
-                          <p className="font-mono text-3xl font-medium text-text">
+                          <p className="text-xs font-medium uppercase tracking-wider text-muted">{kpi.label}</p>
+                          <p className="font-mono text-4xl font-medium text-text">
                             {kpi.value}
                           </p>
                         </div>
-                        <div className="rounded-xl bg-surface2/80 p-2.5 transition-colors group-hover:bg-surface2">
-                          <kpi.icon className="h-5 w-5 text-muted transition-colors group-hover:text-text" />
+                        <div
+                          className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 transition-all group-hover:scale-110"
+                          style={{
+                            boxShadow: hoveredKpi === index ? `0 0 20px ${kpi.color}20` : 'none',
+                          }}
+                        >
+                          <kpi.icon className="h-5 w-5" style={{ color: kpi.color }} />
                         </div>
                       </div>
-                      {hoveredKpi === index && (
-                        <motion.div
-                          layoutId="kpi-glow"
-                          className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent"
-                        />
-                      )}
+                      
+                      {/* Bottom accent line */}
+                      <div
+                        className="mt-4 h-px w-full bg-gradient-to-r opacity-50"
+                        style={{
+                          backgroundImage: `linear-gradient(to right, ${kpi.color}30, transparent)`,
+                        }}
+                      />
                     </div>
-                  </Card>
+                  </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
 
             {/* Chart + Recent Activity */}
             <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
               <motion.div
-                initial="hidden"
-                whileInView="visible"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                variants={fadeInUp}
-                transition={{ delay: 0.2 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
                 className="lg:col-span-2"
               >
-                <Card className="h-full transition-all hover:border-border">
+                <div className="relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-2xl transition-all hover:border-white/10">
                   <div className="mb-6 flex items-center justify-between">
-                    <div>
-                      <h2 className="font-serif text-xl text-text">Shipment Volume</h2>
-                      <p className="text-sm text-muted">Daily shipments and product registrations</p>
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-px bg-gradient-to-b from-accent/50 to-transparent" />
+                      <div>
+                        <h2 className="font-sans text-lg font-semibold text-text">Shipment Volume</h2>
+                        <p className="text-xs text-muted">Daily shipments and product registrations</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-muted">
-                      <span className="flex items-center gap-1">
-                        <span className="h-2 w-2 rounded-full bg-accent" />
+                    <div className="flex items-center gap-3 text-xs text-muted">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_8px_rgba(200,240,96,0.4)]" />
                         Shipments
                       </span>
-                      <span className="flex items-center gap-1">
-                        <span className="h-2 w-2 rounded-full bg-accent2" />
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-accent2 shadow-[0_0_8px_rgba(96,208,240,0.4)]" />
                         Products
                       </span>
                     </div>
@@ -235,24 +268,25 @@ export default function Dashboard() {
                       <AreaChart data={chartData}>
                         <defs>
                           <linearGradient id="shipments" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#c8f060" stopOpacity={0.2} />
+                            <stop offset="5%" stopColor="#c8f060" stopOpacity={0.15} />
                             <stop offset="95%" stopColor="#c8f060" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id="products" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#60d0f0" stopOpacity={0.2} />
+                            <stop offset="5%" stopColor="#60d0f0" stopOpacity={0.15} />
                             <stop offset="95%" stopColor="#60d0f0" stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                        <XAxis dataKey="name" stroke="#333" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#333" fontSize={12} tickLine={false} axisLine={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
+                        <XAxis dataKey="name" stroke="#ffffff15" fontSize={11} tickLine={false} axisLine={false} />
+                        <YAxis stroke="#ffffff15" fontSize={11} tickLine={false} axisLine={false} />
                         <Tooltip
                           contentStyle={{
                             backgroundColor: '#0a0a0a',
-                            border: '1px solid #222',
-                            borderRadius: '12px',
+                            border: '1px solid #ffffff10',
+                            borderRadius: '16px',
                             fontSize: '12px',
-                            backdropFilter: 'blur(10px)',
+                            backdropFilter: 'blur(20px)',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
                           }}
                           itemStyle={{ color: '#f0ece4' }}
                         />
@@ -261,24 +295,29 @@ export default function Dashboard() {
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
-                </Card>
+                </div>
               </motion.div>
 
               <motion.div
-                initial="hidden"
-                whileInView="visible"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                variants={fadeInUp}
-                transition={{ delay: 0.3 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
               >
-                <Card className="h-full transition-all hover:border-border">
+                <div className="relative h-full overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-2xl transition-all hover:border-white/10">
                   <div className="mb-4 flex items-center justify-between">
-                    <h2 className="font-serif text-xl text-text">Recent Products</h2>
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-px bg-gradient-to-b from-accent2/50 to-transparent" />
+                      <h2 className="font-sans text-lg font-semibold text-text">Recent Products</h2>
+                    </div>
                     <Activity className="h-4 w-4 text-muted" />
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {recentProducts.length === 0 && (
-                      <p className="py-8 text-center text-sm text-muted">No products registered yet.</p>
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <Shield className="mb-3 h-8 w-8 text-muted/30" />
+                        <p className="text-sm text-muted">No products registered yet.</p>
+                      </div>
                     )}
                     {recentProducts.map((item, i) => (
                       <motion.div
@@ -286,25 +325,25 @@ export default function Dashboard() {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.05 }}
-                        className="group flex items-start gap-3 rounded-xl p-3 transition-all hover:bg-surface2/50"
+                        className="group flex items-start gap-3 rounded-2xl p-3 transition-all hover:bg-white/5"
                       >
-                        <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-accent shadow-[0_0_8px_rgba(200,240,96,0.5)]" />
+                        <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-accent shadow-[0_0_8px_rgba(200,240,96,0.4)]" />
                         <div className="min-w-0 flex-1 space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="font-mono text-sm font-medium text-text">
                               {item.product_id}
                             </span>
-                            <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+                            <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                           </div>
                           <p className="text-xs text-muted truncate">{item.name}</p>
-                          <p className="text-xs text-muted/50">
+                          <p className="text-xs text-muted/40">
                             {formatDate(item.registered_at)}
                           </p>
                         </div>
                       </motion.div>
                     ))}
                   </div>
-                </Card>
+                </div>
               </motion.div>
             </div>
           </>
