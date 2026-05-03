@@ -87,6 +87,44 @@ backend/
 └── Dockerfile
 ```
 
+## Production Deployment
+
+### Required Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql+psycopg2://user:password@db:5432/chainlens` |
+| `ENVIRONMENT` | Set to `production` to enable production mode | `production` |
+| `CORS_ORIGINS` | Comma-separated list of allowed frontend domains | `https://chainlens.vercel.app` |
+| `SEPOLIA_RPC_URL` | Ethereum Sepolia RPC endpoint | `https://sepolia.infura.io/v3/...` |
+| `PRODUCT_REGISTRY_CONTRACT` | Product registry contract address | `0x...` |
+| `SHIPMENT_TRACKER_CONTRACT` | Shipment tracker contract address | `0x...` |
+
+### Running with Gunicorn
+
+The Docker image uses Gunicorn with Uvicorn workers by default:
+
+```bash
+docker build -t chainlens-backend .
+docker run -p 8000:8000 --env-file .env chainlens-backend
+```
+
+Or run locally with Gunicorn:
+
+```bash
+gunicorn -c gunicorn.conf.py app.main:app
+```
+
+For local development, continue using uvicorn with auto-reload:
+
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Database
+
+In production, set `DATABASE_URL` to a PostgreSQL instance. The application automatically switches from SQLite to PostgreSQL based on the URL prefix.
+
 ## License
 
 MIT

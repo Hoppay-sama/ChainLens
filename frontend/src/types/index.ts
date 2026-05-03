@@ -67,3 +67,17 @@ export interface VerificationResult {
   is_delivered: boolean
   checkpoint_count: number
 }
+
+export interface Shipment {
+  id: number
+  shipment_id: string
+  product_id: string
+  origin: string
+  destination: string
+  status: string // "0"=Created, "1"=InTransit, "2"=AtCheckpoint, "3"=Delivered
+  notes: string | null
+  created_at: string // ISO datetime
+  updated_at: string
+  block_number: number
+  tx_hash: string
+}

@@ -7,6 +7,7 @@ import { rainbowKitConfig } from './config/wagmi'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
+import Shipments from './pages/Shipments'
 import Analytics from './pages/Analytics'
 import Verify from './pages/Verify'
 
@@ -36,6 +37,7 @@ function App() {
               <Route element={<Layout />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/products" element={<Products />} />
+                <Route path="/shipments" element={<Shipments />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/verify" element={<Verify />} />
               </Route>

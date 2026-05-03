@@ -7,6 +7,7 @@ pragma solidity ^0.8.19;
  */
 interface IProductRegistry {
     function isProductRegistered(bytes32 productId) external view returns (bool);
+    function getProductManufacturer(bytes32 productId) external view returns (address);
 }
 
 /**
@@ -94,10 +95,12 @@ contract ShipmentTracker {
      * @dev The first checkpoint for a product has no handler, so the first caller is allowed.
      */
     modifier onlyCurrentHandler(bytes32 productId) {
-        if (
-            currentHandler[productId] != address(0) &&
-            currentHandler[productId] != msg.sender
-        ) {
+        if (!productRegistry.isProductRegistered(productId)) revert ProductNotRegistered();
+        if (currentHandler[productId] == address(0)) {
+            // First checkpoint: only the product manufacturer can initiate tracking
+            address manufacturer = productRegistry.getProductManufacturer(productId);
+            if (manufacturer != msg.sender) revert NotCurrentHandler();
+        } else if (currentHandler[productId] != msg.sender) {
             revert NotCurrentHandler();
         }
         _;

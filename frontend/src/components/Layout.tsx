@@ -1,10 +1,11 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { Package, BarChart3, ShieldCheck, Hexagon } from 'lucide-react'
+import { Package, BarChart3, ShieldCheck, Hexagon, Truck } from 'lucide-react'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: BarChart3 },
   { to: '/products', label: 'Products', icon: Package },
+  { to: '/shipments', label: 'Shipments', icon: Truck },
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/verify', label: 'Verify', icon: ShieldCheck },
 ]

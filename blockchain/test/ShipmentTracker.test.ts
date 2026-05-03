@@ -21,9 +21,9 @@ describe("ShipmentTracker", () => {
     const ShipmentTracker = await ethers.getContractFactory("ShipmentTracker");
     const shipmentTracker = await ShipmentTracker.deploy(await productRegistry.getAddress());
 
-    // Register a product for baseline tests
+    // Register a product for baseline tests (handler1 is the manufacturer)
     const productId = ethers.keccak256(ethers.toUtf8Bytes("shipment-product"));
-    await productRegistry.registerProduct(productId, "Shippable Widget", "Desc", "uri");
+    await productRegistry.connect(handler1).registerProduct(productId, "Shippable Widget", "Desc", "uri");
 
     return { productRegistry, shipmentTracker, owner, handler1, handler2, other, productId };
   }
@@ -81,11 +81,11 @@ describe("ShipmentTracker", () => {
       ).to.be.revertedWithCustomError(shipmentTracker, "EmptyLocation");
     });
 
-    it("reverts with InvalidProductId when productId is bytes32(0)", async () => {
+    it("reverts with ProductNotRegistered when productId is bytes32(0)", async () => {
       const { shipmentTracker, handler1 } = await loadFixture(deployFixture);
       await expect(
         shipmentTracker.connect(handler1).recordCheckpoint(ethers.ZeroHash, "NYC", Status.Created, "notes")
-      ).to.be.revertedWithCustomError(shipmentTracker, "InvalidProductId");
+      ).to.be.revertedWithCustomError(shipmentTracker, "ProductNotRegistered");
     });
 
     it("reverts with InvalidStatusTransition when first checkpoint is not Created", async () => {

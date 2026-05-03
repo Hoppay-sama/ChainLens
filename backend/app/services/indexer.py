@@ -59,7 +59,8 @@ def load_indexer_state() -> Dict:
     if INDEXER_STATE_FILE.exists():
         with open(INDEXER_STATE_FILE, "r") as f:
             return json.load(f)
-    return {"last_processed_block": 0}
+    # Use INDEXER_START_BLOCK env var for initial deployment block
+    return {"last_processed_block": settings.indexer_start_block}
 
 
 def save_indexer_state(state: Dict):

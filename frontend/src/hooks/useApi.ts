@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { Product, Shipment } from '@/types'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -17,6 +18,8 @@ async function fetchApi(endpoint: string) {
     return text
   }
 }
+
+// ─── Existing hooks (unchanged) ───────────────────────────────────────────────
 
 export function useProducts() {
   return useQuery({
@@ -91,4 +94,128 @@ export async function exportAnalytics(format: 'csv' | 'pdf', startDate?: string,
   a.download = `chainlens-export.${format}`
   a.click()
   window.URL.revokeObjectURL(url)
+}
+
+// ─── Paginated / extended hooks ───────────────────────────────────────────────
+
+interface PaginatedResponse<T> {
+  items: T[]
+  total: number
+}
+
+export function useProductsPaginated(page = 1, limit = 10) {
+  const skip = (page - 1) * limit
+  return useQuery<PaginatedResponse<Product>>({
+    queryKey: ['products', 'paginated', page, limit],
+    queryFn: () => fetchApi(`/products?skip=${skip}&limit=${limit}`),
+  })
+}
+
+export function useShipments(page = 1, limit = 10, status?: string) {
+  const skip = (page - 1) * limit
+  let endpoint = `/shipments?skip=${skip}&limit=${limit}`
+  if (status && status !== 'all') endpoint += `&status=${status}`
+  return useQuery<PaginatedResponse<Shipment>>({
+    queryKey: ['shipments', page, limit, status],
+    queryFn: () => fetchApi(endpoint),
+  })
+}
+
+// ─── Mutations ────────────────────────────────────────────────────────────────
+
+export interface ProductMutationInput {
+  name: string
+  manufacturer: string
+  metadata_uri?: string
+}
+
+export interface ShipmentMutationInput {
+  product_id: string
+  origin: string
+  destination: string
+  notes?: string
+}
+
+export function useCreateProduct() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: ProductMutationInput) => {
+      const response = await fetch(`${API_URL}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!response.ok) {
+        const err = await response.text().catch(() => 'Failed to create product')
+        throw new Error(err)
+      }
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+    },
+  })
+}
+
+export function useUpdateProduct() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: ProductMutationInput }) => {
+      const response = await fetch(`${API_URL}/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!response.ok) {
+        const err = await response.text().catch(() => 'Failed to update product')
+        throw new Error(err)
+      }
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+    },
+  })
+}
+
+export function useCreateShipment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: ShipmentMutationInput) => {
+      const response = await fetch(`${API_URL}/shipments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!response.ok) {
+        const err = await response.text().catch(() => 'Failed to create shipment')
+        throw new Error(err)
+      }
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shipments'] })
+    },
+  })
+}
+
+export function useUpdateShipment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: ShipmentMutationInput }) => {
+      const response = await fetch(`${API_URL}/shipments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!response.ok) {
+        const err = await response.text().catch(() => 'Failed to update shipment')
+        throw new Error(err)
+      }
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shipments'] })
+    },
+  })
 }

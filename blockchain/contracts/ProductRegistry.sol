@@ -113,6 +113,16 @@ contract ProductRegistry {
     }
 
     /**
+     * @notice Get the manufacturer address for a product.
+     * @param productId The product identifier.
+     * @return The manufacturer address.
+     */
+    function getProductManufacturer(bytes32 productId) external view returns (address) {
+        if (products[productId].timestamp == 0) revert ProductNotFound();
+        return products[productId].manufacturer;
+    }
+
+    /**
      * @notice Update the metadata URI for a product.
      * @dev Only the original manufacturer can update metadata.
      * @param productId The product identifier.

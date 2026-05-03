@@ -106,6 +106,38 @@ src/
     wagmi.ts            # RainbowKit/Wagmi config
 ```
 
+## Production Deployment
+
+### Required Environment Variables
+
+Before building for production, ensure the following variables are set in your hosting platform (do not commit `.env` files with real secrets):
+
+| Variable | Description | How to obtain |
+|----------|-------------|---------------|
+| `VITE_API_URL` | Backend API base URL | Your deployed API endpoint |
+| `VITE_PRODUCT_REGISTRY_CONTRACT` | Product registry contract address | Deployed contract on Sepolia |
+| `VITE_SHIPMENT_TRACKER_CONTRACT` | Shipment tracker contract address | Deployed contract on Sepolia |
+| `VITE_WALLETCONNECT_PROJECT_ID` | WalletConnect Cloud project ID | https://cloud.walletconnect.com |
+
+### Build Command
+
+```bash
+npm run build
+```
+
+This runs `tsc && vite build` and outputs the production bundle to the `dist/` folder.
+
+### Vercel Deployment Steps
+
+1. Push your code to a Git repository (GitHub, GitLab, or Bitbucket).
+2. Import the project in the [Vercel Dashboard](https://vercel.com).
+3. Set the **Framework Preset** to `Vite`.
+4. Add the environment variables listed above in **Project Settings > Environment Variables**.
+5. Ensure the `vercel.json` at the project root is included in your repository (it handles SPA routing and security headers).
+6. Deploy!
+
+> **Note:** The frontend is configured to only allow the **Sepolia** network in production. WalletConnect will not function without a valid `VITE_WALLETCONNECT_PROJECT_ID`.
+
 ## Design System
 
 - **Background**: `#0d0d0d`

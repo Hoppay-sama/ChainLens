@@ -3,6 +3,8 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.core.config import settings
 
+# Use SQLite with check_same_thread=False for local dev / testing.
+# Switch to PostgreSQL (psycopg2) in production by setting DATABASE_URL.
 if settings.database_url.startswith("sqlite"):
     engine = create_engine(
         settings.database_url, connect_args={"check_same_thread": False}
