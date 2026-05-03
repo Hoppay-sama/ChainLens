@@ -1,28 +1,86 @@
-from fastapi import APIRouter, Depends, Query
+import uuid
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
+from sqlalchemy.exc import IntegrityError
 from app.core.database import get_db
-from app.models.shipment import Checkpoint, CustodyTransfer
-from app.schemas.shipment import CheckpointResponse, CustodyTransferResponse
+from app.models.product import Product
+from app.models.shipment import Checkpoint, CustodyTransfer, Shipment
+from app.schemas.shipment import (
+    CheckpointResponse,
+    CustodyTransferResponse,
+    ShipmentCreate,
+    ShipmentListResponse,
+    ShipmentResponse,
+    ShipmentUpdate,
+)
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[CheckpointResponse])
+@router.get("/", response_model=ShipmentListResponse)
 def get_all_shipments(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=10, ge=1, le=100),
+    status: Optional[str] = Query(default=None),
     db: Session = Depends(get_db),
 ):
-    """List all checkpoints with pagination."""
-    return (
-        db.query(Checkpoint)
-        .order_by(Checkpoint.timestamp.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
+    """List all shipments with optional status filter and pagination."""
+    query = db.query(Shipment)
+    if status is not None:
+        query = query.filter(Shipment.status == status)
+    total = query.count()
+    items = query.order_by(Shipment.created_at.desc()).offset(skip).limit(limit).all()
+    return {"items": items, "total": total}
+
+
+@router.post("/", response_model=ShipmentResponse)
+def create_shipment(
+    shipment_in: ShipmentCreate,
+    db: Session = Depends(get_db),
+):
+    """Create a new shipment."""
+    product = db.query(Product).filter(Product.product_id == shipment_in.product_id).first()
+    if not product:
+        raise HTTPException(status_code=422, detail="Product not found")
+
+    shipment = Shipment(
+        shipment_id=f"SHIP-{uuid.uuid4().hex[:8].upper()}",
+        product_id=shipment_in.product_id,
+        origin=shipment_in.origin,
+        destination=shipment_in.destination,
+        status=shipment_in.status,
+        notes=shipment_in.notes,
     )
+    db.add(shipment)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Shipment ID conflict, please retry")
+    db.refresh(shipment)
+    return shipment
+
+
+@router.put("/{shipment_id}", response_model=ShipmentResponse)
+def update_shipment(
+    shipment_id: str,
+    shipment_in: ShipmentUpdate,
+    db: Session = Depends(get_db),
+):
+    """Update an existing shipment."""
+    shipment = db.query(Shipment).filter(Shipment.shipment_id == shipment_id).first()
+    if not shipment:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+
+    update_data = shipment_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(shipment, field, value)
+
+    db.commit()
+    db.refresh(shipment)
+    return shipment
 
 
 @router.get("/{product_id}/history", response_model=List[CheckpointResponse])

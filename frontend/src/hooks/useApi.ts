@@ -160,8 +160,8 @@ export function useCreateProduct() {
 export function useUpdateProduct() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: ProductMutationInput }) => {
-      const response = await fetch(`${API_URL}/products/${id}`, {
+    mutationFn: async ({ product_id, data }: { product_id: string; data: ProductMutationInput }) => {
+      const response = await fetch(`${API_URL}/products/${product_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -202,8 +202,8 @@ export function useCreateShipment() {
 export function useUpdateShipment() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: ShipmentMutationInput }) => {
-      const response = await fetch(`${API_URL}/shipments/${id}`, {
+    mutationFn: async ({ shipment_id, data }: { shipment_id: string; data: Omit<ShipmentMutationInput, 'product_id'> }) => {
+      const response = await fetch(`${API_URL}/shipments/${shipment_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

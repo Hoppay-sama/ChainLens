@@ -89,9 +89,10 @@ export default function Shipments() {
   const onSubmit = async (formData: ShipmentFormData) => {
     try {
       if (editingShipment) {
+        const { product_id, ...updateData } = formData
         await updateShipment.mutateAsync({
-          id: String(editingShipment.id),
-          data: formData,
+          shipment_id: editingShipment.shipment_id,
+          data: updateData,
         })
       } else {
         await createShipment.mutateAsync(formData)

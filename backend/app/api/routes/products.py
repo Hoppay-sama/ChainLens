@@ -1,3 +1,5 @@
+import uuid
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
@@ -5,21 +7,70 @@ from typing import List
 from app.core.database import get_db
 from app.models.product import Product
 from app.models.shipment import Checkpoint, CustodyTransfer
-from app.schemas.product import ProductResponse
+from app.schemas.product import (
+    ProductCreate,
+    ProductListResponse,
+    ProductResponse,
+    ProductUpdate,
+)
 from app.schemas.shipment import CheckpointResponse, CustodyTransferResponse
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[ProductResponse])
+@router.get("/", response_model=ProductListResponse)
 def list_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db)
 ):
     """List all registered products with pagination."""
-    products = db.query(Product).offset(skip).limit(limit).all()
-    return products
+    query = db.query(Product)
+    total = query.count()
+    items = query.offset(skip).limit(limit).all()
+    return {"items": items, "total": total}
+
+
+@router.post("/", response_model=ProductResponse)
+def create_product(
+    product_in: ProductCreate,
+    db: Session = Depends(get_db),
+):
+    """Create a new product."""
+    product = Product(
+        product_id=f"PROD-{uuid.uuid4().hex[:8].upper()}",
+        name=product_in.name,
+        description=product_in.description,
+        metadata_uri=product_in.metadata_uri,
+        manufacturer_address=product_in.manufacturer_address,
+        registered_at=datetime.now(timezone.utc),
+        block_number=0,
+        tx_hash="0x",
+    )
+    db.add(product)
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+@router.put("/{product_id}", response_model=ProductResponse)
+def update_product(
+    product_id: str,
+    product_in: ProductUpdate,
+    db: Session = Depends(get_db),
+):
+    """Update an existing product."""
+    product = db.query(Product).filter(Product.product_id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    update_data = product_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(product, field, value)
+
+    db.commit()
+    db.refresh(product)
+    return product
 
 
 @router.get("/{product_id}", response_model=dict)

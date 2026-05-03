@@ -55,6 +55,132 @@ def seeded_db(db_session):
     return db_session
 
 
+def test_post_shipment_creates_shipment_successfully(client_fixture, seeded_db):
+    """Regression test: POST /shipments must not return 405 Method Not Allowed."""
+    payload = {
+        "product_id": "0x" + "b" * 64,
+        "origin": "Origin Warehouse",
+        "destination": "Destination Warehouse",
+        "status": "0",
+        "notes": "Fragile items",
+    }
+    response = client_fixture.post("/shipments", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["product_id"] == payload["product_id"]
+    assert data["origin"] == payload["origin"]
+    assert data["destination"] == payload["destination"]
+    assert data["status"] == payload["status"]
+    assert data["notes"] == payload["notes"]
+    assert data["block_number"] == 0
+    assert data["tx_hash"] == "0x"
+
+
+def test_post_shipment_returns_created_shipment_with_generated_id(client_fixture, seeded_db):
+    payload = {
+        "product_id": "0x" + "b" * 64,
+        "origin": "Origin",
+        "destination": "Destination",
+        "status": "0",
+    }
+    response = client_fixture.post("/shipments", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "shipment_id" in data
+    assert data["shipment_id"].startswith("SHIP-")
+    assert len(data["shipment_id"]) == len("SHIP-") + 8
+    assert data["id"] is not None
+    assert data["created_at"] is not None
+    assert data["updated_at"] is not None
+
+
+def test_post_shipment_returns_422_for_nonexistent_product(client_fixture, seeded_db):
+    """Creating a shipment for a non-existent product should fail gracefully."""
+    payload = {
+        "product_id": "0xnonexistent",
+        "origin": "Origin",
+        "destination": "Destination",
+        "status": "0",
+    }
+    response = client_fixture.post("/shipments", json=payload)
+    assert response.status_code == 422
+    assert "Product not found" in response.json()["detail"]
+
+
+def test_put_shipment_updates_existing_shipment(client_fixture, seeded_db):
+    create_payload = {
+        "product_id": "0x" + "b" * 64,
+        "origin": "Old Origin",
+        "destination": "Old Destination",
+        "status": "0",
+        "notes": "Old notes",
+    }
+    create_response = client_fixture.post("/shipments", json=create_payload)
+    shipment_id = create_response.json()["shipment_id"]
+
+    update_payload = {
+        "origin": "New Origin",
+        "status": "1",
+        "notes": "Updated notes",
+    }
+    response = client_fixture.put(f"/shipments/{shipment_id}", json=update_payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["origin"] == "New Origin"
+    assert data["status"] == "1"
+    assert data["notes"] == "Updated notes"
+    assert data["destination"] == "Old Destination"
+    assert data["shipment_id"] == shipment_id
+
+
+def test_put_shipment_returns_404_for_nonexistent_shipment(client_fixture, seeded_db):
+    response = client_fixture.put("/shipments/SHIP-NONEXISTENT", json={"origin": "New"})
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Shipment not found"
+
+
+def test_get_shipments_returns_paginated_list_with_items_and_total(client_fixture, seeded_db):
+    for i in range(2):
+        client_fixture.post("/shipments", json={
+            "product_id": "0x" + "b" * 64,
+            "origin": f"Origin {i}",
+            "destination": f"Destination {i}",
+            "status": str(i),
+        })
+
+    response = client_fixture.get("/shipments")
+    assert response.status_code == 200
+    data = response.json()
+    assert "items" in data
+    assert "total" in data
+    assert isinstance(data["items"], list)
+    assert data["total"] == 2
+    assert len(data["items"]) == 2
+
+
+def test_get_shipments_filters_by_status_correctly(client_fixture, seeded_db):
+    client_fixture.post("/shipments", json={
+        "product_id": "0x" + "b" * 64,
+        "origin": "Warehouse A",
+        "destination": "Store B",
+        "status": "0",
+    })
+    client_fixture.post("/shipments", json={
+        "product_id": "0x" + "b" * 64,
+        "origin": "Warehouse C",
+        "destination": "Store D",
+        "status": "1",
+    })
+
+    response = client_fixture.get("/shipments?status=1")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert len(data["items"]) == 1
+    assert data["items"][0]["status"] == "1"
+    assert data["items"][0]["origin"] == "Warehouse C"
+
+
 def test_get_history(client_fixture, seeded_db):
     response = client_fixture.get("/shipments/0x" + "b" * 64 + "/history")
     assert response.status_code == 200

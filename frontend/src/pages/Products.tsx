@@ -158,7 +158,7 @@ export default function Products() {
     try {
       if (editingProduct) {
         await updateProduct.mutateAsync({
-          id: String(editingProduct.id),
+          product_id: editingProduct.product_id,
           data: formData,
         })
       } else {

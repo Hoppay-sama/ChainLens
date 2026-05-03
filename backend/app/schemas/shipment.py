@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 
 
@@ -33,3 +33,40 @@ class CustodyTransferResponse(CustodyTransferBase):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ShipmentBase(BaseModel):
+    product_id: str
+    origin: str
+    destination: str
+    status: str = "0"
+    notes: Optional[str] = None
+
+
+class ShipmentCreate(ShipmentBase):
+    pass
+
+
+class ShipmentUpdate(BaseModel):
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+
+    model_config = ConfigDict(extra='ignore')
+
+
+class ShipmentResponse(ShipmentBase):
+    id: int
+    shipment_id: str
+    created_at: datetime
+    updated_at: datetime
+    block_number: int
+    tx_hash: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ShipmentListResponse(BaseModel):
+    items: List[ShipmentResponse]
+    total: int
