@@ -160,8 +160,8 @@ export function useCreateProduct() {
 export function useUpdateProduct() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: ProductMutationInput }) => {
-      const response = await fetch(`${API_URL}/products/${id}`, {
+    mutationFn: async ({ product_id, data }: { product_id: string; data: ProductMutationInput }) => {
+      const response = await fetch(`${API_URL}/products/${product_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
