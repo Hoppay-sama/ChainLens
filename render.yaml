@@ -1,0 +1,31 @@
+# ChainLens Backend — Render Deployment Configuration
+# Documentation: https://render.com/docs/web-services
+
+# This file tells Render how to build and deploy your FastAPI backend.
+# No secrets here — those go in Render Dashboard → Environment Variables.
+
+services:
+  - type: web
+    name: chainlens-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: API_PORT
+        value: 8000
+      - key: INDEXER_POLL_INTERVAL
+        value: 60
+      - key: INDEXER_START_BLOCK
+        value: 10779035
+      - key: PRODUCT_REGISTRY_CONTRACT
+        value: 0x1F76018532D619194f6628ADc186e3c86FcB5AaA
+      - key: SHIPMENT_TRACKER_CONTRACT
+        value: 0x95b09C0aeD53f6b63C072F4ecaC18861FcbBFB30
+      # Secrets to set in Render Dashboard:
+      # - DATABASE_URL
+      # - SEPOLIA_RPC_URL
+      # - CORS_ORIGINS
+    healthCheckPath: /health
+    autoDeploy: true

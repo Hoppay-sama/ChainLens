@@ -2,7 +2,7 @@
 # Documentation: https://fly.io/docs/reference/configuration/
 
 app = 'chainlens-api'
-primary_region = 'iad'
+primary_region = 'sin'
 
 [build]
   dockerfile = 'Dockerfile'
@@ -34,7 +34,7 @@ primary_region = 'iad'
   size = 'shared-cpu-1x'
   memory = '512mb'
 
-# Secrets to set via `fly secrets set`:
-# DATABASE_URL=<neon-postgresql-connection-string>
-# SEPOLIA_RPC_URL=<alchemy-sepolia-url>
-# CORS_ORIGINS=<vercel-domain>
+# Secrets to set via `fly secrets set` (DO NOT add real values here):
+# DATABASE_URL=<your-neon-connection-string>
+# SEPOLIA_RPC_URL=<your-alchemy-sepolia-url>
+# CORS_ORIGINS=<your-vercel-domain>
