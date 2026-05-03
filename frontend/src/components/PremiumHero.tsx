@@ -46,12 +46,12 @@ export default function PremiumHero() {
           initial="hidden"
           animate="visible"
           variants={fadeIn}
-          className="font-serif leading-[0.95] tracking-tight"
+          className="font-serif leading-[1.05] tracking-tight"
         >
           <span className="block text-[clamp(3.5rem,10vw,8rem)] text-text">
             Track
           </span>
-          <span className="block text-[clamp(3.5rem,10vw,8rem)] bg-gradient-to-r from-accent via-accent2 to-accent3 bg-clip-text text-transparent">
+          <span className="block pb-2 text-[clamp(3.5rem,10vw,8rem)] bg-gradient-to-r from-accent via-accent2 to-accent3 bg-clip-text text-transparent">
             Beyond
           </span>
           <span className="block mt-2 text-[clamp(1.2rem,3vw,2.5rem)] uppercase tracking-[0.3em] text-muted">
