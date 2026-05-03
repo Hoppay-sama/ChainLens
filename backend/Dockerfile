@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./app ./app
 COPY alembic.ini .
+COPY gunicorn.conf.py .
 
 EXPOSE 8000
 
