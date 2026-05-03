@@ -41,7 +41,7 @@ export default function Verify() {
   return (
     <div className="animate-fade-in space-y-6 px-6 sm:px-12 lg:px-20">
       {/* ─── Header ──────────────────────────────────────────────── */}
-      <div className="space-y-3 pt-8">
+      <div className="space-y-3 pt-28">
         <div className="flex items-center gap-4">
           <div className="h-px w-8 bg-accent/40" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent/60">

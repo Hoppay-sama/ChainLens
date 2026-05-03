@@ -178,7 +178,7 @@ export default function Products() {
   return (
     <div className="animate-fade-in space-y-6 px-6 sm:px-12 lg:px-20">
       {/* ─── Registry Header ───────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 pt-8 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-4 pt-28 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-3">
           <div className="flex items-center gap-4">
             <div className="h-px w-8 bg-accent/40" />
