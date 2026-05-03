@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 # When allow_credentials=True with a wildcard fallback, compliant middleware
 # reflects the actual origin instead of returning "*".
 if configured_origins == ["*"]:
-    TEST_ORIGIN = "https://chain-lens-two.vercel.app"
+    TEST_ORIGIN = "https://veritras.vercel.app"
     EXPECTED_HEADER = "*"
     EXPECTED_CREDENTIALS = None
 elif configured_origins:
@@ -33,7 +33,7 @@ elif configured_origins:
 else:
     # Empty origins fallback to allow_origins=["*"] but allow_credentials=True
     # Starlette reflects the request origin in this mode.
-    TEST_ORIGIN = "https://chain-lens-two.vercel.app"
+    TEST_ORIGIN = "https://veritras.vercel.app"
     EXPECTED_HEADER = TEST_ORIGIN
     EXPECTED_CREDENTIALS = "true"
 
@@ -183,18 +183,18 @@ class TestCorsProductionScenario:
     """Simulate explicit production CORS_ORIGINS configuration."""
 
     def test_production_origin_is_allowed(self):
-        app = _build_app_with_cors("https://chain-lens-two.vercel.app")
+        app = _build_app_with_cors("https://veritras.vercel.app")
         client = TestClient(app)
         response = client.get(
             "/products",
-            headers={"Origin": "https://chain-lens-two.vercel.app"},
+            headers={"Origin": "https://veritras.vercel.app"},
         )
         assert response.status_code == 200
-        assert response.headers.get("access-control-allow-origin") == "https://chain-lens-two.vercel.app"
+        assert response.headers.get("access-control-allow-origin") == "https://veritras.vercel.app"
         assert response.headers.get("access-control-allow-credentials") == "true"
 
     def test_unknown_origin_does_not_receive_cors_headers(self):
-        app = _build_app_with_cors("https://chain-lens-two.vercel.app")
+        app = _build_app_with_cors("https://veritras.vercel.app")
         client = TestClient(app)
         response = client.get(
             "/products",
@@ -204,7 +204,7 @@ class TestCorsProductionScenario:
         assert "access-control-allow-origin" not in response.headers
 
     def test_preflight_unknown_origin_does_not_receive_allow_origin_header(self):
-        app = _build_app_with_cors("https://chain-lens-two.vercel.app")
+        app = _build_app_with_cors("https://veritras.vercel.app")
         client = TestClient(app)
         response = client.options(
             "/products",
@@ -254,8 +254,8 @@ class TestCorsEdgeCases:
         assert result == ["http://localhost:5173", "https://example.com"]
 
     def test_trailing_slash_is_stripped(self):
-        result = parse_cors_origins("https://chain-lens-two.vercel.app/")
-        assert result == ["https://chain-lens-two.vercel.app"]
+        result = parse_cors_origins("https://veritras.vercel.app/")
+        assert result == ["https://veritras.vercel.app"]
 
     def test_trailing_slashes_on_multiple_origins_are_stripped(self):
         result = parse_cors_origins("https://app.example.com/,https://admin.example.com/")
@@ -269,7 +269,7 @@ class TestCorsDefaultConfig:
         from app.core.config import Settings
 
         field = Settings.model_fields["cors_origins"]
-        assert field.default == ""
+        assert field.default == "http://localhost:5173"
 
 
 class TestCorsProductionGuard:
