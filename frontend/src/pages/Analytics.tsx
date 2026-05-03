@@ -1,4 +1,3 @@
-import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -56,39 +55,45 @@ export default function Analytics() {
   }
 
   return (
-    <div className="animate-fade-in space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <h1 className="font-serif text-3xl text-text sm:text-4xl">
+    <div className="animate-fade-in space-y-6 px-6 sm:px-12 lg:px-20">
+      {/* ─── Header ──────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-4 pt-28 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="h-px w-8 bg-accent/40" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent/60">
+              Insights
+            </span>
+          </div>
+          <h1 className="font-serif text-3xl leading-[1.1] tracking-tight text-text sm:text-4xl">
             Analytics
           </h1>
-          <p className="max-w-2xl text-muted">
+          <p className="max-w-xl text-sm leading-relaxed text-muted">
             Deep insights into shipment performance, transit patterns, and anomaly detection.
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => handleExport('csv')}>
+          <Button variant="secondary" onClick={() => handleExport('csv')} className="gap-2">
             <Download className="h-4 w-4" />
             Export CSV
           </Button>
-          <Button variant="secondary" onClick={() => handleExport('pdf')}>
+          <Button variant="secondary" onClick={() => handleExport('pdf')} className="gap-2">
             <Download className="h-4 w-4" />
             Export PDF
           </Button>
         </div>
       </div>
 
-      {/* Loading State */}
+      {/* ─── Loading State ─────────────────────────────────────────── */}
       {isLoading && (
         <div className="flex items-center justify-center py-16">
           <LoadingSpinner size="lg" />
         </div>
       )}
 
-      {/* Error State */}
+      {/* ─── Error State ───────────────────────────────────────────── */}
       {error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 p-4">
+        <div className="flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-5 backdrop-blur-xl">
           <AlertCircle className="h-5 w-5 shrink-0 text-red-400" />
           <div>
             <p className="font-medium text-red-400">Failed to load analytics data</p>
@@ -101,29 +106,30 @@ export default function Analytics() {
 
       {!isLoading && !error && (
         <>
-          {/* Charts Grid */}
+          {/* ─── Charts Grid ───────────────────────────────────────── */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {/* Shipment Volume by Route */}
-            <Card>
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-2xl">
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="font-semibold text-text">Volume by Route</h2>
-                  <p className="text-sm text-muted">Shipment count per trade lane</p>
+                  <p className="text-sm text-muted/60">Shipment count per trade lane</p>
                 </div>
-                <Route className="h-5 w-5 text-muted" />
+                <Route className="h-5 w-5 text-muted/30" />
               </div>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={volumeData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" vertical={false} />
-                    <XAxis dataKey="route" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                    <XAxis dataKey="route" stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#1e1e1e',
-                        border: '1px solid #2a2a2a',
-                        borderRadius: '8px',
+                        backgroundColor: 'rgba(10,10,10,0.9)',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                        borderRadius: '12px',
                         fontSize: '12px',
+                        backdropFilter: 'blur(20px)',
                       }}
                       itemStyle={{ color: '#f0ece4' }}
                     />
@@ -131,16 +137,16 @@ export default function Analytics() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </Card>
+            </div>
 
             {/* Bottleneck Distribution */}
-            <Card>
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-2xl">
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="font-semibold text-text">Bottleneck Locations</h2>
-                  <p className="text-sm text-muted">Incident count by location</p>
+                  <p className="text-sm text-muted/60">Incident count by location</p>
                 </div>
-                <Clock className="h-5 w-5 text-muted" />
+                <Clock className="h-5 w-5 text-muted/30" />
               </div>
               <div className="flex h-[300px] items-center">
                 {bottleneckPieData.length === 0 ? (
@@ -164,10 +170,11 @@ export default function Analytics() {
                         </Pie>
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: '#1e1e1e',
-                            border: '1px solid #2a2a2a',
-                            borderRadius: '8px',
+                            backgroundColor: 'rgba(10,10,10,0.9)',
+                            border: '1px solid rgba(255,255,255,0.06)',
+                            borderRadius: '12px',
                             fontSize: '12px',
+                            backdropFilter: 'blur(20px)',
                           }}
                           itemStyle={{ color: '#f0ece4' }}
                         />
@@ -185,29 +192,30 @@ export default function Analytics() {
                   </>
                 )}
               </div>
-            </Card>
+            </div>
 
             {/* Transit Time by Route */}
-            <Card>
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-2xl">
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="font-semibold text-text">Transit Time by Route</h2>
-                  <p className="text-sm text-muted">Average delay in days</p>
+                  <p className="text-sm text-muted/60">Average delay in days</p>
                 </div>
-                <TrendingUp className="h-5 w-5 text-muted" />
+                <TrendingUp className="h-5 w-5 text-muted/30" />
               </div>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={volumeData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" horizontal={false} />
-                    <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis dataKey="route" type="category" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} width={60} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
+                    <XAxis type="number" stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis dataKey="route" type="category" stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} width={60} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#1e1e1e',
-                        border: '1px solid #2a2a2a',
-                        borderRadius: '8px',
+                        backgroundColor: 'rgba(10,10,10,0.9)',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                        borderRadius: '12px',
                         fontSize: '12px',
+                        backdropFilter: 'blur(20px)',
                       }}
                       itemStyle={{ color: '#f0ece4' }}
                       formatter={(value: number) => [`${value} days`, 'Avg Delay']}
@@ -216,14 +224,14 @@ export default function Analytics() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </Card>
+            </div>
 
             {/* Anomaly Table */}
-            <Card>
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-2xl">
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="font-semibold text-text">Flagged Shipments</h2>
-                  <p className="text-sm text-muted">Detected anomalies requiring attention</p>
+                  <p className="text-sm text-muted/60">Detected anomalies requiring attention</p>
                 </div>
                 <AlertTriangle className="h-5 w-5 text-accent3" />
               </div>
@@ -233,7 +241,7 @@ export default function Analytics() {
                 ) : (
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b border-border text-xs uppercase text-muted">
+                      <tr className="border-b border-white/[0.06] text-xs uppercase tracking-wider text-muted/60">
                         <th className="pb-3 font-medium">Product ID</th>
                         <th className="pb-3 font-medium">Severity</th>
                         <th className="pb-3 font-medium">Transit (hrs)</th>
@@ -241,9 +249,9 @@ export default function Analytics() {
                         <th className="pb-3 font-medium">Flagged At</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y divide-white/[0.04]">
                       {anomalies.map((item) => (
-                        <tr key={`${item.product_id}-${item.flagged_at}`} className="transition-colors hover:bg-surface2/50">
+                        <tr key={`${item.product_id}-${item.flagged_at}`} className="transition-colors hover:bg-white/[0.02]">
                           <td className="py-3 font-mono text-text">{item.product_id}</td>
                           <td className="py-3">
                             <Badge
@@ -269,7 +277,7 @@ export default function Analytics() {
                   </table>
                 )}
               </div>
-            </Card>
+            </div>
           </div>
         </>
       )}

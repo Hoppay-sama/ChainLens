@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChainLens — Portfolio Case Study</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --border2: #333;
+    --text: #f0ece4;
+    --muted: #888;
+    --hint: #555;
+    --accent: #c8f060;
+    --accent2: #60d0f0;
+    --accent3: #f0a060;
+    --accent4: #d060f0;
+    --gold: #e8d060;
+    --red: #f06060;
+    --green: #60f090;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+  .page { max-width: 860px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+
+  /* HERO */
+  .hero {
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    padding: 3rem;
+    margin-bottom: 4rem;
+    position: relative;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle at top right, rgba(200,240,96,0.07), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hero-label::before {
+    content: '';
+    display: inline-block;
+    width: 20px; height: 1px;
+    background: var(--accent);
+  }
+  .hero-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    font-weight: 400;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+  }
+  .hero-subtitle {
+    font-size: 16px;
+    color: var(--muted);
+    margin-bottom: 2.5rem;
+    max-width: 500px;
+  }
+  .hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 2.5rem;
+  }
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 4px 12px;
+    border: 1px solid;
+    border-radius: 1px;
+  }
+  .tag-green { border-color: var(--accent); color: var(--accent); }
+  .tag-blue { border-color: var(--accent2); color: var(--accent2); }
+  .tag-orange { border-color: var(--accent3); color: var(--accent3); }
+  .tag-purple { border-color: var(--accent4); color: var(--accent4); }
+  .tag-gold { border-color: var(--gold); color: var(--gold); }
+  .hero-meta {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+  }
+  .meta-item {
+    background: var(--surface2);
+    padding: 1rem 1.25rem;
+  }
+  .meta-val {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .meta-lbl { font-size: 12px; color: var(--muted); }
+
+  /* SECTION */
+  .section { margin-bottom: 4rem; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .section-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--hint);
+  }
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .card-body { font-size: 14px; color: #b0a898; line-height: 1.7; }
+
+  .accent-card {
+    border-left: 3px solid var(--accent);
+    background: linear-gradient(to right, rgba(200,240,96,0.04), transparent);
+  }
+  .blue-card {
+    border-left: 3px solid var(--accent2);
+    background: linear-gradient(to right, rgba(96,208,240,0.04), transparent);
+  }
+  .orange-card {
+    border-left: 3px solid var(--accent3);
+    background: linear-gradient(to right, rgba(240,160,96,0.04), transparent);
+  }
+  .purple-card {
+    border-left: 3px solid var(--accent4);
+    background: linear-gradient(to right, rgba(208,96,240,0.04), transparent);
+  }
+  .red-card {
+    border-left: 3px solid var(--red);
+    background: linear-gradient(to right, rgba(240,96,96,0.04), transparent);
+  }
+  .gold-card {
+    border-left: 3px solid var(--gold);
+    background: linear-gradient(to right, rgba(232,208,96,0.04), transparent);
+  }
+
+  /* PROBLEM */
+  .problem-stat {
+    font-family: 'DM Serif Display', serif;
+    font-size: 3rem;
+    color: var(--accent3);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* STACK GRID */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .stack-cell {
+    background: var(--surface);
+    padding: 1.25rem;
+  }
+  .stack-cat {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .stack-item {
+    font-size: 13px;
+    color: #c0b8ac;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .stack-item:last-child { border-bottom: none; }
+
+  /* FEATURES */
+  .feat-list { list-style: none; }
+  .feat-list li {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    color: #b0a898;
+    align-items: flex-start;
+  }
+  .feat-list li:last-child { border-bottom: none; }
+  .feat-bullet {
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--accent);
+    border-radius: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .feat-bullet svg { display: block; }
+  .feat-strong { font-weight: 600; color: var(--text); }
+
+  /* MILESTONES */
+  .milestone {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 0;
+    margin-bottom: 1px;
+    background: var(--border);
+  }
+  .mile-week {
+    background: var(--surface2);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    border-right: 1px solid var(--border);
+    padding-top: 1.5rem;
+  }
+  .mile-week-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--hint);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+  .mile-week-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--muted);
+    line-height: 1;
+  }
+  .mile-body { background: var(--surface); padding: 1.25rem 1.5rem; }
+  .mile-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .mile-desc { font-size: 13px; color: #998f85; line-height: 1.65; }
+  .mile-accent-green { border-top: 2px solid var(--accent); }
+  .mile-accent-blue { border-top: 2px solid var(--accent2); }
+  .mile-accent-orange { border-top: 2px solid var(--accent3); }
+  .mile-accent-purple { border-top: 2px solid var(--accent4); }
+  .mile-accent-gold { border-top: 2px solid var(--gold); }
+  .mile-accent-red { border-top: 2px solid var(--red); }
+
+  /* AI TOOLS */
+  .ai-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .ai-cell { background: var(--surface); padding: 1.25rem; }
+  .ai-tool-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .ai-tool-use { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+  /* RUBRIC */
+  .rubric-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .rubric-row:last-child { border-bottom: none; }
+  .rubric-label { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .rubric-desc { font-size: 12px; color: var(--muted); }
+  .rubric-bar-wrap { height: 3px; background: var(--border2); border-radius: 2px; margin-top: 6px; max-width: 300px; }
+  .rubric-bar { height: 3px; border-radius: 2px; background: var(--accent); }
+  .rubric-pct {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  /* MISTAKES */
+  .mistake-row {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+  .mistake-row:last-child { border-bottom: none; }
+  .mistake-icon {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--red);
+    padding-top: 2px;
+    flex-shrink: 0;
+  }
+  .mistake-text { font-size: 14px; color: #b0a898; line-height: 1.6; }
+
+  /* RESUME QUOTE */
+  .resume-quote {
+    border: 1px solid var(--border2);
+    border-left: 4px solid var(--accent);
+    background: var(--surface);
+    padding: 1.5rem 2rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    border-radius: 1px;
+  }
+
+  /* FOOTER */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding-top: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .footer-left { font-size: 12px; color: var(--hint); }
+  .footer-project {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--border2);
+    letter-spacing: -0.02em;
+  }
+
+  /* DIVIDER */
+  hr { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+
+  /* INLINE HIGHLIGHT */
+  .hl { color: var(--accent); font-weight: 600; }
+  .hl-blue { color: var(--accent2); font-weight: 600; }
+  .hl-orange { color: var(--accent3); font-weight: 600; }
+
+  /* CALLOUT */
+  .callout {
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .callout-icon { font-size: 16px; flex-shrink: 0; padding-top: 2px; }
+  .callout-text { font-size: 14px; line-height: 1.65; }
+  .callout-warn { background: rgba(240,160,96,0.06); border-color: rgba(240,160,96,0.3); color: #c8a070; }
+  .callout-info { background: rgba(96,208,240,0.06); border-color: rgba(96,208,240,0.3); color: #70b8c8; }
+  .callout-success { background: rgba(200,240,96,0.06); border-color: rgba(200,240,96,0.3); color: #90b848; }
+
+  /* EMPLOYER TARGETS */
+  .employer-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .employer-cell { background: var(--surface); padding: 1.25rem; }
+  .employer-type {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .employer-name { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .employer-reason { font-size: 13px; color: #998f85; line-height: 1.55; }
+
+  @media (max-width: 600px) {
+    .hero { padding: 2rem 1.5rem; }
+    .hero-meta { grid-template-columns: repeat(2, 1fr); }
+    .stack-grid, .ai-grid, .employer-grid { grid-template-columns: 1fr; }
+    .milestone { grid-template-columns: 60px 1fr; }
+    .rubric-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-label">Portfolio Case Study — Data Analytics + Blockchain</div>
+    <div class="hero-title">ChainLens</div>
+    <div class="hero-subtitle">A blockchain-powered supply chain analytics and product traceability dashboard</div>
+    <div class="hero-tags">
+      <span class="tag tag-green">Data Analytics</span>
+      <span class="tag tag-blue">Blockchain / Web3</span>
+      <span class="tag tag-orange">Smart Contracts</span>
+      <span class="tag tag-purple">Full-Stack</span>
+      <span class="tag tag-gold">AI-Assisted Dev</span>
+    </div>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <div class="meta-val">6–8</div>
+        <div class="meta-lbl">weeks to build</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-val">$0</div>
+        <div class="meta-lbl">infra cost</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-val">3</div>
+        <div class="meta-lbl">job roles targeted</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-val">AI</div>
+        <div class="meta-lbl">assisted workflow</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 01: PROBLEM -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">The problem this solves</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="card accent-card">
+      <div class="card-title">Business context</div>
+      <div class="card-body">
+        <span class="problem-stat">$600B+</span>
+        Lost annually in global supply chains due to fraud, counterfeiting, and opacity. Companies cannot verify whether a product's journey from factory to shelf is authentic or tampered with — and today's analytics tools don't talk to blockchain records. They live in disconnected silos.
+      </div>
+    </div>
+
+    <div class="card blue-card">
+      <div class="card-title">What ChainLens does</div>
+      <div class="card-body">ChainLens records every product movement event <span class="hl-blue">immutably on-chain</span> using Ethereum smart contracts. A Python indexer then pulls those events into a database and surfaces them through a <span class="hl">real-time analytics dashboard</span>. The result: a single pane of glass where a business can verify product provenance AND track supply chain KPIs simultaneously — something no off-the-shelf tool currently does cleanly.</div>
+    </div>
+
+    <div class="callout callout-warn">
+      <span class="callout-icon">★</span>
+      <div class="callout-text"><strong style="color:#e8b870">Why this is the right portfolio project:</strong> It is not a tutorial clone. It solves a real, documented industry pain point. It combines two high-demand skill sets into one coherent product. And it produces live demos, deployed smart contracts, and data visualizations — all tangible, clickable proof-of-work that a hiring manager can actually open.</div>
+    </div>
+  </div>
+
+  <!-- SECTION 02: WHO HIRES YOU -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Who this gets you hired by</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="employer-grid">
+      <div class="employer-cell">
+        <div class="employer-type">Web3 / DeFi Startups</div>
+        <div class="employer-name" style="color:var(--accent)">Blockchain-native companies</div>
+        <div class="employer-reason">Smart contracts on a public testnet + on-chain analytics proves you are not just theoretical. This is exactly what they screen for in junior roles.</div>
+      </div>
+      <div class="employer-cell">
+        <div class="employer-type">Enterprise Tech & Consulting</div>
+        <div class="employer-name" style="color:var(--accent2)">Accenture · Deloitte · IBM</div>
+        <div class="employer-reason">Supply chain + analytics is a top consulting vertical. This project maps directly to their blockchain pilot engagements with Fortune 500 clients.</div>
+      </div>
+      <div class="employer-cell">
+        <div class="employer-type">Logistics & Trade Tech</div>
+        <div class="employer-name" style="color:var(--accent3)">Maersk · FedEx · DHL Tech</div>
+        <div class="employer-reason">These companies are actively piloting blockchain-backed traceability. Your project uses the exact vocabulary of their internal initiatives.</div>
+      </div>
+      <div class="employer-cell">
+        <div class="employer-type">Fintech</div>
+        <div class="employer-name" style="color:var(--accent4)">Tokenization & Asset platforms</div>
+        <div class="employer-reason">Fintechs building tokenized real-world assets need people who can both write on-chain logic and make sense of on-chain data analytically.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 03: TECH STACK -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Technology stack</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="stack-grid">
+      <div class="stack-cell">
+        <div class="stack-cat">Blockchain layer</div>
+        <div class="stack-item">Solidity 0.8+ — smart contract language</div>
+        <div class="stack-item">Hardhat — local dev, testing, and deployment</div>
+        <div class="stack-item">Sepolia testnet — Ethereum public testnet (free)</div>
+        <div class="stack-item">Ethers.js / Viem — frontend chain interaction</div>
+        <div class="stack-item">IPFS / Pinata — decentralized metadata storage</div>
+      </div>
+      <div class="stack-cell">
+        <div class="stack-cat">Data & Analytics layer</div>
+        <div class="stack-item">Python 3.11+ — core language for data work</div>
+        <div class="stack-item">Pandas + NumPy — data transformation and KPIs</div>
+        <div class="stack-item">Web3.py — blockchain event listener (Python)</div>
+        <div class="stack-item">SQLite / PostgreSQL — event storage database</div>
+        <div class="stack-item">Recharts / Chart.js — dashboard visualizations</div>
+      </div>
+      <div class="stack-cell">
+        <div class="stack-cat">Frontend</div>
+        <div class="stack-item">React 18 + TypeScript — UI framework</div>
+        <div class="stack-item">Tailwind CSS — styling</div>
+        <div class="stack-item">RainbowKit — wallet connection (MetaMask)</div>
+        <div class="stack-item">React Query — async data fetching</div>
+        <div class="stack-item">Vite — fast build tooling</div>
+      </div>
+      <div class="stack-cell">
+        <div class="stack-cat">Backend & Infrastructure</div>
+        <div class="stack-item">FastAPI — Python REST API</div>
+        <div class="stack-item">Docker — containerized deployment</div>
+        <div class="stack-item">Vercel — frontend hosting (free tier)</div>
+        <div class="stack-item">Railway — backend hosting (free tier)</div>
+        <div class="stack-item">GitHub Actions — basic CI pipeline</div>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">→</span>
+      <div class="callout-text"><strong style="color:#90c8d8">Total infrastructure cost: $0.</strong> Sepolia is a free Ethereum testnet. Vercel and Railway both have generous free tiers. IPFS via Pinata is free up to 1GB. You have no excuse not to deploy.</div>
+    </div>
+  </div>
+
+  <!-- SECTION 04: AI TOOLS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">AI tools — how to use them</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="card gold-card" style="margin-bottom:1.5rem">
+      <div class="card-title">The rule: use AI to learn, not to skip learning</div>
+      <div class="card-body">Using AI is a real, expected skill in 2025. You should use it. But every AI-generated snippet you paste must be something you can explain line by line in an interview. If you cannot explain it, do not ship it. Document your AI usage openly in your README — recruiters who use AI themselves will respect it.</div>
+    </div>
+
+    <div class="ai-grid">
+      <div class="ai-cell">
+        <div class="ai-tool-name" style="color:var(--accent)">Claude / ChatGPT</div>
+        <div class="ai-tool-use">Write and debug Solidity contracts, explain Ethereum error messages, generate Hardhat test cases, and explain any concept you don't understand</div>
+      </div>
+      <div class="ai-cell">
+        <div class="ai-tool-name" style="color:var(--accent2)">GitHub Copilot</div>
+        <div class="ai-tool-use">Autocomplete Python ETL scripts, React components, FastAPI routes, and boilerplate — speed through the parts you already understand</div>
+      </div>
+      <div class="ai-cell">
+        <div class="ai-tool-name" style="color:var(--accent3)">Cursor IDE</div>
+        <div class="ai-tool-use">Inline AI edits and refactors across the codebase, explain legacy code sections, and generate test coverage for entire modules</div>
+      </div>
+      <div class="ai-cell">
+        <div class="ai-tool-name" style="color:var(--accent4)">v0 / Lovable</div>
+        <div class="ai-tool-use">Quickly scaffold the React dashboard UI and chart components from text descriptions so you spend time on the logic, not CSS struggles</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 05: FEATURES -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2 class="section-title">Core features to build</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="card blue-card" style="margin-bottom:1rem">
+      <div class="card-title" style="color:var(--accent2)">Blockchain layer — smart contracts</div>
+      <ul class="feat-list">
+        <li>
+          <div class="feat-bullet"><svg width="8" height="8"><path d="M1 4 L3.5 6.5 L7 2" stroke="#c8f060" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>
+          <span><span class="feat-strong">ProductRegistry.sol</span> — registers a product with a unique ID, manufacturer wallet address, and block timestamp. The entry is permanent and anyone can query it.</span>
+        </li>
+        <li>
+          <div class="feat-bullet"><svg width="8" height="8"><path d="M1 4 L3.5 6.5 L7 2" stroke="#c8f060" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>
+          <span><span class="feat-strong">ShipmentTracker.sol</span> — emits on-chain events for each checkpoint (factory → warehouse → distributor → retailer). Every event is immutable and timestamped by block.</span>
+        </li>
+        <li>
+          <div class="feat-bullet"><svg width="8" height="8"><path d="M1 4 L3.5 6.5 L7 2" stroke="#c8f060" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>
+          <span><span class="feat-strong">Custody transfer</span> — transferring ownership between wallet addresses with on-chain signatures. Simulates a real company-to-company handoff.</span>
+        </li>
+        <li>
+          <div class="feat-bullet"><svg width="8" height="8"><path d="M1 4 L3.5 6.5 L7 2" stroke="#c8f060" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>
+          <span><span class="feat-strong">QR verification page</span> — generate a QR code per product that deep-links to a public page showing the product's complete, verified blockchain history.</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="card accent-card">
+      <div class="card-title" style="color:var(--accent)">Analytics layer — data & insights</div>
+      <ul class="feat-list">
+        <li>
+          <div class="feat-bullet"><svg width="8" height="8"><path d="M1 4 L3.5 6.5 L7 2" stroke="#c8f060" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>
+          <span><span class="feat-strong">Event indexer service</span> — a Web3.py Python script that continuously polls Sepolia for contract events and writes them to your database for fast analytics queries.</span>
+        </li>
+        <li>
+          <div class="feat-bullet"><svg width="8" height="8"><path d="M1 4 L3.5 6.5 L7 2" stroke="#c8f060" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>
+          <span><span class="feat-strong">KPI dashboard</span> — average transit time per supply chain leg, on-time delivery rate, checkpoint bottleneck detection, and shipment volume trends over time.</span>
+        </li>
+        <li>
+          <div class="feat-bullet"><svg width="8" height="8"><path d="M1 4 L3.5 6.5 L7 2" stroke="#c8f060" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>
+          <span><span class="feat-strong">Anomaly detection</span> — flag shipments that sat too long at a checkpoint or had unexpected custody changes. A Z-score model on dwell times is sufficient and impressive.</span>
+        </li>
+        <li>
+          <div class="feat-bullet"><svg width="8" height="8"><path d="M1 4 L3.5 6.5 L7 2" stroke="#c8f060" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>
+          <span><span class="feat-strong">Exportable reports</span> — CSV and PDF export for any date range. This tiny feature signals that you understand real business workflows, not just code.</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SECTION 06: MILESTONES -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2 class="section-title">Build milestones</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div style="border:1px solid var(--border); margin-bottom:1.5rem; overflow:hidden;">
+      <div class="milestone mile-accent-green">
+        <div class="mile-week">
+          <div class="mile-week-label">Week</div>
+          <div class="mile-week-num">1</div>
+        </div>
+        <div class="mile-body">
+          <div class="mile-title">Project scaffolding + ProductRegistry contract</div>
+          <div class="mile-desc">Initialize your GitHub repo on day 1 (public, from day 1 — your commit history matters). Set up Hardhat. Write and locally test ProductRegistry.sol. Deploy to Sepolia testnet. Paste the contract address in your README. Use Claude to explain any Solidity error messages — but write the final code yourself and understand every line.</div>
+        </div>
+      </div>
+      <div class="milestone mile-accent-blue">
+        <div class="mile-week">
+          <div class="mile-week-label">Week</div>
+          <div class="mile-week-num">2</div>
+        </div>
+        <div class="mile-body">
+          <div class="mile-title">ShipmentTracker contract + test coverage</div>
+          <div class="mile-desc">Add the tracking contract with checkpoint events and custody transfer. Write Hardhat unit tests targeting 90%+ branch coverage. Design your event schema carefully — what fields each event emits drives your entire analytics layer downstream. Spend real time on this design decision.</div>
+        </div>
+      </div>
+      <div class="milestone mile-accent-orange">
+        <div class="mile-week">
+          <div class="mile-week-label">Wks</div>
+          <div class="mile-week-num">3–4</div>
+        </div>
+        <div class="mile-body">
+          <div class="mile-title">Python indexer + database + realistic seed data</div>
+          <div class="mile-desc">Build the Web3.py event-polling service and write events to SQLite. Generate realistic mock shipment data using Python's Faker library — you need hundreds of records so your dashboard actually looks useful. Write the Pandas transformations for each KPI. Build the FastAPI endpoints that serve the dashboard.</div>
+        </div>
+      </div>
+      <div class="milestone mile-accent-purple">
+        <div class="mile-week">
+          <div class="mile-week-label">Week</div>
+          <div class="mile-week-num">5</div>
+        </div>
+        <div class="mile-body">
+          <div class="mile-title">React dashboard + wallet connection + charts</div>
+          <div class="mile-desc">Build the frontend. Connect RainbowKit so users can sign in with MetaMask. Display the KPI charts. Build the product lookup page — anyone can paste a product ID and see its complete, verified chain history with timestamps and wallet addresses. This single feature is your showstopper demo moment.</div>
+        </div>
+      </div>
+      <div class="milestone mile-accent-gold">
+        <div class="mile-week">
+          <div class="mile-week-label">Week</div>
+          <div class="mile-week-num">6</div>
+        </div>
+        <div class="mile-body">
+          <div class="mile-title">Anomaly detection + reports + QR codes</div>
+          <div class="mile-desc">Add Z-score anomaly flagging on checkpoint dwell times. Flag anomalies visually in the dashboard. Build CSV and PDF export. Generate QR codes using Python's qrcode library. Deploy to Vercel (frontend) and Railway (backend) by end of this week — do not wait until you're "done."</div>
+        </div>
+      </div>
+      <div class="milestone mile-accent-red">
+        <div class="mile-week">
+          <div class="mile-week-label">Wks</div>
+          <div class="mile-week-num">7–8</div>
+        </div>
+        <div class="mile-body">
+          <div class="mile-title">Polish, document, and promote</div>
+          <div class="mile-desc">Write a stellar README: architecture diagram, demo GIF or screenshot, live URLs, setup guide, and a dedicated "How I used AI" section. Record a 3-minute Loom walkthrough. Write a LinkedIn post explaining the problem you solved and what you learned. Add the live URL and contract address to your resume. This is the week most students skip — don't.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-success">
+      <span class="callout-icon">✦</span>
+      <div class="callout-text"><strong style="color:#90b848">Stretch goals</strong> — only pursue these if the core is fully deployed and polished: multi-chain support (add Polygon Amoy) · Chainlink oracle for live logistics price feeds · The Graph protocol subgraph for decentralized data indexing · Role-based access control in the contract (manufacturer vs. distributor roles) · Mobile-responsive PWA</div>
+    </div>
+  </div>
+
+  <!-- SECTION 07: RUBRIC -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2 class="section-title">How hiring managers will evaluate this</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="card" style="padding:1rem 1.5rem">
+      <div class="rubric-row">
+        <div>
+          <div class="rubric-label">Working live product</div>
+          <div class="rubric-desc">Deployed URL + smart contract on testnet + real data visible in dashboard</div>
+          <div class="rubric-bar-wrap"><div class="rubric-bar" style="width:100%"></div></div>
+        </div>
+        <div class="rubric-pct">30%</div>
+      </div>
+      <div class="rubric-row">
+        <div>
+          <div class="rubric-label">Code quality & structure</div>
+          <div class="rubric-desc">Clean repo, meaningful comments, tests present, no secrets in code, logical folder structure</div>
+          <div class="rubric-bar-wrap"><div class="rubric-bar" style="width:80%"></div></div>
+        </div>
+        <div class="rubric-pct">20%</div>
+      </div>
+      <div class="rubric-row">
+        <div>
+          <div class="rubric-label">Data insight quality</div>
+          <div class="rubric-desc">Meaningful KPIs, anomaly detection, export functionality — evidence of business thinking</div>
+          <div class="rubric-bar-wrap"><div class="rubric-bar" style="width:80%"></div></div>
+        </div>
+        <div class="rubric-pct">20%</div>
+      </div>
+      <div class="rubric-row">
+        <div>
+          <div class="rubric-label">Documentation</div>
+          <div class="rubric-desc">README with architecture diagram, setup guide, contract addresses, and AI usage disclosure</div>
+          <div class="rubric-bar-wrap"><div class="rubric-bar" style="width:70%"></div></div>
+        </div>
+        <div class="rubric-pct">15%</div>
+      </div>
+      <div class="rubric-row" style="border-bottom:none">
+        <div>
+          <div class="rubric-label">Presentation & communication</div>
+          <div class="rubric-desc">Loom demo video, LinkedIn post, ability to walk through the project in an interview</div>
+          <div class="rubric-bar-wrap"><div class="rubric-bar" style="width:60%"></div></div>
+        </div>
+        <div class="rubric-pct">15%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 08: MISTAKES -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2 class="section-title">Mistakes that will kill your portfolio</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="card red-card">
+      <div class="mistake-row">
+        <div class="mistake-icon">✕</div>
+        <div class="mistake-text"><strong style="color:var(--text)">Tutorial clones.</strong> Building a CryptoZombies or DeFi Bootcamp clone tells a recruiter you can follow instructions. ChainLens is original — it solves a real problem. Protect that differentiation at all costs.</div>
+      </div>
+      <div class="mistake-row">
+        <div class="mistake-icon">✕</div>
+        <div class="mistake-text"><strong style="color:var(--text)">No live deployment.</strong> "I built it locally" reads as unfinished. A zip file is not a portfolio piece. Deploy by the end of week 6 no matter how imperfect it is — you can iterate after.</div>
+      </div>
+      <div class="mistake-row">
+        <div class="mistake-icon">✕</div>
+        <div class="mistake-text"><strong style="color:var(--text)">Private repos.</strong> If your GitHub shows one giant commit pushed the night before you applied, it signals you built nothing or copied everything. Public from day 1 — let the commit history speak for you.</div>
+      </div>
+      <div class="mistake-row">
+        <div class="mistake-icon">✕</div>
+        <div class="mistake-text"><strong style="color:var(--text)">Scope creep.</strong> No NFTs, no DAO governance, no DeFi yield farming in v1. Ship the core described here, then and only then add a stretch feature. Students who try to build everything finish nothing.</div>
+      </div>
+      <div class="mistake-row">
+        <div class="mistake-icon">✕</div>
+        <div class="mistake-text"><strong style="color:var(--text)">Hiding AI usage.</strong> If a recruiter asks "did you build this yourself?" and you can't explain the Solidity code, you've already lost the offer. Use AI as a teacher, not a ghostwriter.</div>
+      </div>
+      <div class="mistake-row" style="border-bottom:none">
+        <div class="mistake-icon">✕</div>
+        <div class="mistake-text"><strong style="color:var(--text)">Skipping the README and demo video.</strong> Hiring managers spend 90 seconds on a portfolio project. If your README doesn't hook them in 15 seconds, they close the tab. A Loom video saves your project from being ignored.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 09: RESUME -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">09</span>
+      <h2 class="section-title">Resume & LinkedIn copy</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="resume-quote">
+"Designed and deployed ChainLens, a supply chain traceability platform on Ethereum (Sepolia testnet). Built Solidity smart contracts for product registration and shipment tracking, a Python event-indexing backend using Web3.py and FastAPI, and a React analytics dashboard with real-time KPI tracking, anomaly detection on shipment timelines, and QR-based product verification. Deployed on Vercel and Railway."
+    </div>
+
+    <div class="card blue-card">
+      <div class="card-title">What to link on your resume</div>
+      <ul class="feat-list">
+        <li><div class="feat-bullet"><svg width="8" height="8"><path d="M1 4 L3.5 6.5 L7 2" stroke="#60d0f0" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div><span>Contract address on Sepolia Etherscan (a permanent, verifiable artifact anyone can check)</span></li>
+        <li><div class="feat-bullet"><svg width="8" height="8"><path d="M1 4 L3.5 6.5 L7 2" stroke="#60d0f0" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div><span>GitHub repository link (public, with a clean commit history and a great README)</span></li>
+        <li><div class="feat-bullet"><svg width="8" height="8"><path d="M1 4 L3.5 6.5 L7 2" stroke="#60d0f0" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div><span>Live dashboard URL (Vercel deployment — anyone should be able to click it right now)</span></li>
+        <li><div class="feat-bullet"><svg width="8" height="8"><path d="M1 4 L3.5 6.5 L7 2" stroke="#60d0f0" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div><span>Loom demo video link (3 minutes, walk through the problem, solution, and live demo)</span></li>
+      </ul>
+    </div>
+
+    <div class="callout callout-warn">
+      <span class="callout-icon">!</span>
+      <div class="callout-text"><strong style="color:#e8b870">Interview prep:</strong> Be ready to answer — "Walk me through how the blockchain and analytics layers communicate." "Why did you choose Sepolia over Mainnet?" "How does your anomaly detection work?" "What would you do differently if this were a production system?" If you built it yourself (with AI assistance), you can answer all of these.</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-left">
+      <div>Case study prepared for a graduating data analyst & blockchain developer</div>
+      <div>AI-assisted development is expected and encouraged — document it openly</div>
+      <div style="margin-top:8px">Total cost: $0 · Timeline: 6–8 weeks · Deployment: public from day 1</div>
+    </div>
+    <div class="footer-project">ChainLens</div>
+  </div>
+
+</div>
+</body>
+</html>

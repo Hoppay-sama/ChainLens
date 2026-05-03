@@ -98,5 +98,5 @@ deployed-contracts.json
 .cursor/
 
 #.planning
-.planning/
+# .planning/
 scripts/

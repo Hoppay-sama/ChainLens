@@ -1,80 +1,130 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { Package, BarChart3, ShieldCheck, Hexagon, Truck } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Menu, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: BarChart3 },
-  { to: '/products', label: 'Products', icon: Package },
-  { to: '/shipments', label: 'Shipments', icon: Truck },
-  { to: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { to: '/verify', label: 'Verify', icon: ShieldCheck },
+  { to: '/', label: 'Dashboard' },
+  { to: '/products', label: 'Products' },
+  { to: '/shipments', label: 'Shipments' },
+  { to: '/analytics', label: 'Analytics' },
+  { to: '/verify', label: 'Verify' },
 ]
 
 export default function Layout() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50)
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   return (
     <div className="min-h-screen bg-bg text-text">
-      {/* Top Navigation */}
-      <header className="sticky top-0 z-50 border-b border-border bg-bg/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      {/* Top Navigation - LUMINA Style */}
+      <motion.header
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          scrolled
+            ? 'border-b border-white/5 bg-bg/80 backdrop-blur-2xl'
+            : 'bg-transparent'
+        }`}
+      >
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 sm:px-12 lg:px-20">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10">
-              <Hexagon className="h-5 w-5 text-accent" strokeWidth={2} />
-            </div>
-            <span className="font-serif text-xl tracking-wide text-text">
+          <NavLink to="/" className="flex items-center gap-2 group">
+            <span className="font-serif text-xl tracking-wider text-text">
               Veritras
             </span>
-          </div>
+          </NavLink>
 
-          {/* Navigation */}
+          {/* Desktop Navigation - Center */}
           <nav className="hidden items-center gap-1 md:flex">
-            {navItems.map(({ to, label, icon: Icon }) => (
+            {navItems.map(({ to, label }) => (
               <NavLink
                 key={to}
                 to={to}
                 className={({ isActive }) =>
-                  `flex items-center gap-2 rounded-button px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                  `relative px-4 py-2 text-[11px] font-medium uppercase tracking-[0.15em] transition-colors duration-300 ${
                     isActive
-                      ? 'bg-surface2 text-accent'
-                      : 'text-muted hover:bg-surface2 hover:text-text'
+                      ? 'text-text'
+                      : 'text-muted hover:text-text'
                   }`
                 }
               >
-                <Icon className="h-4 w-4" />
-                {label}
+                {({ isActive }) => (
+                  <>
+                    {label}
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-underline"
+                        className="absolute bottom-0 left-4 right-4 h-px bg-accent"
+                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>
 
-          {/* Wallet Connect */}
-          <ConnectButton
-            showBalance={false}
-            accountStatus="address"
-            chainStatus="icon"
-          />
+          {/* Right side - Wallet + Mobile Menu */}
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:block">
+              <ConnectButton
+                showBalance={false}
+                accountStatus="address"
+                chainStatus="icon"
+              />
+            </div>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex h-9 w-9 items-center justify-center text-muted transition-colors hover:text-text md:hidden"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
-      </header>
 
-      {/* Mobile Navigation */}
-      <nav className="flex items-center justify-around border-b border-border bg-surface px-4 py-2 md:hidden">
-        {navItems.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex flex-col items-center gap-1 rounded-md px-3 py-2 text-xs font-medium transition-colors ${
-                isActive ? 'text-accent' : 'text-muted'
-              }`
-            }
-          >
-            <Icon className="h-5 w-5" />
-            {label}
-          </NavLink>
-        ))}
-      </nav>
+        {/* Mobile Navigation */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="border-t border-white/5 bg-bg/95 backdrop-blur-2xl md:hidden"
+            >
+              <div className="space-y-1 px-6 py-4">
+                {navItems.map(({ to, label }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
+                        isActive
+                          ? 'bg-white/5 text-text'
+                          : 'text-muted hover:bg-white/[0.02] hover:text-text'
+                      }`
+                    }
+                  >
+                    {label}
+                  </NavLink>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="relative z-10">
         <Outlet />
       </main>
     </div>
