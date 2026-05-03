@@ -1,0 +1,40 @@
+# fly.toml - ChainLens Backend Deployment Configuration
+# Documentation: https://fly.io/docs/reference/configuration/
+
+app = 'chainlens-api'
+primary_region = 'iad'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  API_HOST = '0.0.0.0'
+  API_PORT = '8000'
+  INDEXER_POLL_INTERVAL = '60'
+  INDEXER_START_BLOCK = '10779035'
+  PRODUCT_REGISTRY_CONTRACT = '0x1F76018532D619194f6628ADc186e3c86FcB5AaA'
+  SHIPMENT_TRACKER_CONTRACT = '0x95b09C0aeD53f6b63C072F4ecaC18861FcbBFB30'
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '10s'
+    method = 'GET'
+    path = '/health'
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '512mb'
+
+# Secrets to set via `fly secrets set`:
+# DATABASE_URL=<neon-postgresql-connection-string>
+# SEPOLIA_RPC_URL=<alchemy-sepolia-url>
+# CORS_ORIGINS=<vercel-domain>
