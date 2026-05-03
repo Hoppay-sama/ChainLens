@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     environment: str = Field(default="development")
     database_url: str = Field(default="sqlite:///./veritras.db")
     # Default to empty string. In production, CORS_ORIGINS must be set explicitly.
-    cors_origins: str = Field(default="")
+    cors_origins: str = Field(default="http://localhost:5173")
     sepolia_rpc_url: str = Field(default="")
     product_registry_contract: str = Field(default="")
     shipment_tracker_contract: str = Field(default="")

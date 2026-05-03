@@ -7,10 +7,17 @@ from app.core.config import settings
 # Switch to PostgreSQL (psycopg2) in production by setting DATABASE_URL.
 if settings.database_url.startswith("sqlite"):
     engine = create_engine(
-        settings.database_url, connect_args={"check_same_thread": False}
+        settings.database_url,
+        connect_args={"check_same_thread": False},
     )
 else:
-    engine = create_engine(settings.database_url)
+    engine = create_engine(
+        settings.database_url,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        pool_size=5,
+        max_overflow=10,
+    )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
