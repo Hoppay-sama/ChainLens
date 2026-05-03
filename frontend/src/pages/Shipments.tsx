@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -109,12 +108,20 @@ export default function Shipments() {
   const mutationError = createShipment.error || updateShipment.error
 
   return (
-    <div className="animate-fade-in space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-2">
-          <h1 className="font-serif text-3xl text-text sm:text-4xl">Shipments</h1>
-          <p className="max-w-2xl text-muted">
+    <div className="animate-fade-in space-y-6 px-6 sm:px-12 lg:px-20">
+      {/* ─── Header ──────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-4 pt-8 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="h-px w-8 bg-accent/40" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent/60">
+              Supply Chain
+            </span>
+          </div>
+          <h1 className="font-serif text-3xl leading-[1.1] tracking-tight text-text sm:text-4xl">
+            Shipments
+          </h1>
+          <p className="max-w-xl text-sm leading-relaxed text-muted">
             Manage and track product shipments across the supply chain.
           </p>
         </div>
@@ -124,11 +131,11 @@ export default function Shipments() {
         </Button>
       </div>
 
-      {/* Filters */}
-      <Card>
+      {/* ─── Filters ─────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-2xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-2">
-            <Truck className="h-4 w-4 text-muted" />
+            <Truck className="h-4 w-4 text-muted/40" />
             <span className="text-sm text-muted">Status Filter</span>
           </div>
           <select
@@ -137,7 +144,7 @@ export default function Shipments() {
               setStatusFilter(e.target.value)
               setPage(1)
             }}
-            className="w-full rounded-button border border-border bg-bg py-2.5 pl-3 pr-8 text-sm text-text outline-none transition-colors focus:border-accent/50 focus:ring-1 focus:ring-accent/20 sm:w-auto"
+            className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 pl-3 pr-8 text-sm text-text outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10 sm:w-auto"
           >
             {statusOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -146,11 +153,11 @@ export default function Shipments() {
             ))}
           </select>
         </div>
-      </Card>
+      </div>
 
-      {/* Error */}
+      {/* ─── Error ─────────────────────────────────────────────────── */}
       {error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 p-4">
+        <div className="flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-5 backdrop-blur-xl">
           <AlertCircle className="h-5 w-5 shrink-0 text-red-400" />
           <div>
             <p className="font-medium text-red-400">Failed to load shipments</p>
@@ -161,36 +168,36 @@ export default function Shipments() {
         </div>
       )}
 
-      {/* Table */}
-      <Card className="overflow-hidden p-0">
+      {/* ─── Table ─────────────────────────────────────────────────── */}
+      <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-2xl">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <LoadingSpinner size="lg" />
           </div>
         ) : shipments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Package className="h-12 w-12 text-muted/30" />
-            <p className="mt-4 text-muted">No shipments found</p>
+            <Package className="h-12 w-12 text-muted/20" />
+            <p className="mt-4 text-sm text-muted">No shipments found</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-border bg-surface2/50">
-                <tr>
-                  <th className="px-6 py-3 font-medium text-muted">Shipment ID</th>
-                  <th className="px-6 py-3 font-medium text-muted">Product ID</th>
-                  <th className="px-6 py-3 font-medium text-muted">Origin</th>
-                  <th className="px-6 py-3 font-medium text-muted">Destination</th>
-                  <th className="px-6 py-3 font-medium text-muted">Status</th>
-                  <th className="px-6 py-3 font-medium text-muted">Created</th>
-                  <th className="px-6 py-3 font-medium text-muted">Actions</th>
+              <thead>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Shipment ID</th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Product ID</th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Origin</th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Destination</th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Status</th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Created</th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-white/[0.04]">
                 {shipments.map((shipment) => (
                   <tr
                     key={shipment.id}
-                    className="transition-colors hover:bg-surface2/30"
+                    className="transition-colors hover:bg-white/[0.02]"
                   >
                     <td className="px-6 py-4 font-mono text-text">
                       {shipment.shipment_id}
@@ -211,7 +218,7 @@ export default function Shipments() {
                     <td className="px-6 py-4">
                       <button
                         onClick={() => openEditModal(shipment)}
-                        className="rounded-button p-2 text-muted transition-colors hover:bg-surface2 hover:text-text"
+                        className="rounded-lg p-2 text-muted/40 transition-colors hover:bg-white/[0.04] hover:text-text"
                         aria-label={`Edit shipment ${shipment.shipment_id}`}
                       >
                         <Pencil className="h-4 w-4" />
@@ -226,11 +233,11 @@ export default function Shipments() {
 
         {/* Pagination */}
         {!isLoading && shipments.length > 0 && (
-          <div className="flex items-center justify-between border-t border-border px-6 py-4">
+          <div className="flex items-center justify-between border-t border-white/[0.06] px-6 py-4">
             <p className="text-sm text-muted">
               Page <span className="text-text">{page}</span> of{' '}
               <span className="text-text">{totalPages}</span>{' '}
-              <span className="text-muted/70">({total} total)</span>
+              <span className="text-muted/50">({total} total)</span>
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -252,9 +259,9 @@ export default function Shipments() {
             </div>
           </div>
         )}
-      </Card>
+      </div>
 
-      {/* Add/Edit Modal */}
+      {/* ─── Add/Edit Modal ────────────────────────────────────────── */}
       <Modal
         open={modalOpen}
         onClose={() => {
@@ -268,7 +275,7 @@ export default function Shipments() {
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {mutationError && (
-            <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+            <div className="rounded-xl border border-red-500/20 bg-red-500/[0.06] p-3 text-sm text-red-400">
               {mutationError instanceof Error ? mutationError.message : 'An error occurred'}
             </div>
           )}
@@ -280,7 +287,7 @@ export default function Shipments() {
             <input
               {...register('product_id')}
               placeholder="e.g., PROD-8842"
-              className="w-full rounded-button border border-border bg-bg py-2.5 px-4 text-sm text-text placeholder-muted outline-none transition-colors focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+              className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
             />
             {errors.product_id && (
               <p className="mt-1 text-xs text-red-400">{errors.product_id.message}</p>
@@ -295,7 +302,7 @@ export default function Shipments() {
               <input
                 {...register('origin')}
                 placeholder="Origin location"
-                className="w-full rounded-button border border-border bg-bg py-2.5 px-4 text-sm text-text placeholder-muted outline-none transition-colors focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+                className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
               />
               {errors.origin && (
                 <p className="mt-1 text-xs text-red-400">{errors.origin.message}</p>
@@ -308,7 +315,7 @@ export default function Shipments() {
               <input
                 {...register('destination')}
                 placeholder="Destination location"
-                className="w-full rounded-button border border-border bg-bg py-2.5 px-4 text-sm text-text placeholder-muted outline-none transition-colors focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+                className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
               />
               {errors.destination && (
                 <p className="mt-1 text-xs text-red-400">{errors.destination.message}</p>
@@ -324,7 +331,7 @@ export default function Shipments() {
               {...register('notes')}
               rows={3}
               placeholder="Additional notes..."
-              className="w-full rounded-button border border-border bg-bg py-2.5 px-4 text-sm text-text placeholder-muted outline-none transition-colors focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+              className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
             />
             {errors.notes && (
               <p className="mt-1 text-xs text-red-400">{errors.notes.message}</p>

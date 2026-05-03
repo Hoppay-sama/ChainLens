@@ -50,7 +50,6 @@ const statusVariant: Record<string, 'default' | 'blue' | 'orange' | 'success'> =
 const DEFAULT_LIMIT = 10
 
 export default function Products() {
-  // ─── Table / Registry State ───────────────────────────────────────────────
   const [page, setPage] = useState(1)
   const [nameSearch, setNameSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -80,13 +79,11 @@ export default function Products() {
 
   const totalPages = Math.max(1, Math.ceil(totalRaw / DEFAULT_LIMIT))
 
-  // Reset page when search changes
   const handleSearchChange = (value: string) => {
     setNameSearch(value)
     setPage(1)
   }
 
-  // ─── Lookup State (existing) ──────────────────────────────────────────────
   const [searchId, setSearchId] = useState('')
   const [submittedId, setSubmittedId] = useState('')
 
@@ -121,7 +118,6 @@ export default function Products() {
     productError instanceof Error &&
     (productError.message.includes('404') || productError.message.includes('not found'))
 
-  // ─── Form ─────────────────────────────────────────────────────────────────
   const {
     register,
     handleSubmit,
@@ -180,12 +176,20 @@ export default function Products() {
   const mutationError = createProduct.error || updateProduct.error
 
   return (
-    <div className="animate-fade-in space-y-8">
-      {/* ─── Registry Header ──────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-2">
-          <h1 className="font-serif text-3xl text-text sm:text-4xl">Products</h1>
-          <p className="max-w-2xl text-muted">
+    <div className="animate-fade-in space-y-6 px-6 sm:px-12 lg:px-20">
+      {/* ─── Registry Header ───────────────────────────────────────── */}
+      <div className="flex flex-col gap-4 pt-8 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="h-px w-8 bg-accent/40" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent/60">
+              Registry
+            </span>
+          </div>
+          <h1 className="font-serif text-3xl leading-[1.1] tracking-tight text-text sm:text-4xl">
+            Products
+          </h1>
+          <p className="max-w-xl text-sm leading-relaxed text-muted">
             Browse registered products, manage records, or search by ID to inspect
             blockchain history and custody transfers.
           </p>
@@ -196,25 +200,25 @@ export default function Products() {
         </Button>
       </div>
 
-      {/* ─── Filters ──────────────────────────────────────────────────────── */}
-      <Card>
+      {/* ─── Filters ───────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-2xl">
         <div className="flex flex-col gap-4 sm:flex-row">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted/40" />
             <input
               type="text"
               placeholder="Filter by product name..."
               value={nameSearch}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full rounded-button border border-border bg-bg py-2.5 pl-10 pr-4 text-sm text-text placeholder-muted outline-none transition-colors focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+              className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 pl-10 pr-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
             />
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* ─── Table Error ──────────────────────────────────────────────────── */}
+      {/* ─── Table Error ───────────────────────────────────────────── */}
       {tableError && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 p-4">
+        <div className="flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-5 backdrop-blur-xl">
           <AlertCircle className="h-5 w-5 shrink-0 text-red-400" />
           <div>
             <p className="font-medium text-red-400">Failed to load products</p>
@@ -225,36 +229,36 @@ export default function Products() {
         </div>
       )}
 
-      {/* ─── Products Table ───────────────────────────────────────────────── */}
-      <Card className="overflow-hidden p-0">
+      {/* ─── Products Table ────────────────────────────────────────── */}
+      <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-2xl">
         {tableLoading ? (
           <div className="flex items-center justify-center py-16">
             <LoadingSpinner size="lg" />
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Package className="h-12 w-12 text-muted/30" />
-            <p className="mt-4 text-muted">
+            <Package className="h-12 w-12 text-muted/20" />
+            <p className="mt-4 text-sm text-muted">
               {nameSearch ? 'No products match your search' : 'No products registered yet'}
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-border bg-surface2/50">
-                <tr>
-                  <th className="px-6 py-3 font-medium text-muted">Product ID</th>
-                  <th className="px-6 py-3 font-medium text-muted">Name</th>
-                  <th className="px-6 py-3 font-medium text-muted">Manufacturer</th>
-                  <th className="px-6 py-3 font-medium text-muted">Registered</th>
-                  <th className="px-6 py-3 font-medium text-muted">Actions</th>
+              <thead>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Product ID</th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Name</th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Manufacturer</th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Registered</th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-white/[0.04]">
                 {filteredItems.map((item) => (
                   <tr
                     key={item.id}
-                    className="transition-colors hover:bg-surface2/30"
+                    className="transition-colors hover:bg-white/[0.02]"
                   >
                     <td className="px-6 py-4 font-mono text-text">
                       {item.product_id}
@@ -270,14 +274,14 @@ export default function Products() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => viewProduct(item.product_id)}
-                          className="rounded-button p-2 text-muted transition-colors hover:bg-surface2 hover:text-text"
+                          className="rounded-lg p-2 text-muted/40 transition-colors hover:bg-white/[0.04] hover:text-text"
                           aria-label={`View ${item.product_id}`}
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => openEditModal(item)}
-                          className="rounded-button p-2 text-muted transition-colors hover:bg-surface2 hover:text-text"
+                          className="rounded-lg p-2 text-muted/40 transition-colors hover:bg-white/[0.04] hover:text-text"
                           aria-label={`Edit ${item.product_id}`}
                         >
                           <Pencil className="h-4 w-4" />
@@ -293,11 +297,11 @@ export default function Products() {
 
         {/* Pagination */}
         {!tableLoading && filteredItems.length > 0 && (
-          <div className="flex items-center justify-between border-t border-border px-6 py-4">
+          <div className="flex items-center justify-between border-t border-white/[0.06] px-6 py-4">
             <p className="text-sm text-muted">
               Page <span className="text-text">{page}</span> of{' '}
               <span className="text-text">{totalPages}</span>{' '}
-              <span className="text-muted/70">({totalRaw} total)</span>
+              <span className="text-muted/50">({totalRaw} total)</span>
               {nameSearch && (
                 <span className="ml-2 text-accent">
                   filtered from current page
@@ -324,41 +328,47 @@ export default function Products() {
             </div>
           </div>
         )}
-      </Card>
+      </div>
 
-      {/* ─── Product Lookup (existing) ────────────────────────────────────── */}
-      <div className="space-y-2">
-        <h2 className="font-serif text-2xl text-text sm:text-3xl">
+      {/* ─── Product Lookup ────────────────────────────────────────── */}
+      <div className="space-y-3 pt-4">
+        <div className="flex items-center gap-4">
+          <div className="h-px w-8 bg-accent/40" />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent/60">
+            Search
+          </span>
+        </div>
+        <h2 className="font-serif text-2xl leading-[1.1] tracking-tight text-text sm:text-3xl">
           Product Lookup
         </h2>
-        <p className="max-w-2xl text-muted">
+        <p className="max-w-xl text-sm leading-relaxed text-muted">
           Search for a product by ID to view its complete blockchain history,
           custody transfers, and verification status.
         </p>
       </div>
 
-      <Card>
-        <div className="flex flex-col gap-4 sm:flex-row">
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-1 backdrop-blur-2xl">
+        <div className="flex flex-col gap-3 p-5 sm:flex-row">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted/40" />
             <input
               type="text"
               placeholder="Enter product ID (e.g., PROD-8842)"
               value={searchId}
               onChange={(e) => setSearchId(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleLookupSearch()}
-              className="w-full rounded-button border border-border bg-bg py-2.5 pl-10 pr-4 text-sm text-text placeholder-muted outline-none transition-colors focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+              className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 pl-10 pr-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
             />
           </div>
           <Button onClick={handleLookupSearch} disabled={loadingDetail} className="min-w-[120px]">
             {loadingDetail ? <LoadingSpinner size="sm" /> : 'Search'}
           </Button>
         </div>
-      </Card>
+      </div>
 
-      {/* Not Found */}
+      {/* ─── Not Found ─────────────────────────────────────────────── */}
       {isNotFound && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 p-4">
+        <div className="flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-5 backdrop-blur-xl">
           <AlertCircle className="h-5 w-5 shrink-0 text-red-400" />
           <div>
             <p className="font-medium text-red-400">Product Not Found</p>
@@ -369,9 +379,9 @@ export default function Products() {
         </div>
       )}
 
-      {/* Error (other than 404) */}
+      {/* ─── Error (other than 404) ────────────────────────────────── */}
       {productError && !isNotFound && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 p-4">
+        <div className="flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-5 backdrop-blur-xl">
           <AlertCircle className="h-5 w-5 shrink-0 text-red-400" />
           <div>
             <p className="font-medium text-red-400">Error</p>
@@ -382,10 +392,9 @@ export default function Products() {
         </div>
       )}
 
-      {/* Product Details */}
+      {/* ─── Product Details ───────────────────────────────────────── */}
       {product && !loadingDetail && (
-        <div className="space-y-6">
-          {/* Product Info Card */}
+        <div className="space-y-4">
           <Card variant="accent">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-4">
@@ -412,36 +421,34 @@ export default function Products() {
                   </div>
                 </div>
               </div>
-              <div className="rounded-lg bg-accent/5 p-4 text-center">
+              <div className="rounded-xl bg-accent/[0.06] p-4 text-center">
                 <CheckCircle2 className="mx-auto h-8 w-8 text-accent" />
                 <p className="mt-2 text-xs font-medium text-accent">Blockchain Verified</p>
               </div>
             </div>
           </Card>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {/* Shipment Timeline */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <h3 className="mb-6 font-semibold text-text">Shipment Timeline</h3>
               {history.length === 0 ? (
                 <p className="text-sm text-muted">No checkpoint history available.</p>
               ) : (
                 <div className="relative space-y-0">
-                  {/* Vertical line */}
-                  <div className="absolute left-[19px] top-2 bottom-2 w-px bg-border" />
+                  <div className="absolute left-[19px] top-2 bottom-2 w-px bg-white/[0.06]" />
                   {history.map((checkpoint) => (
                     <div key={checkpoint.id} className="relative flex gap-4 pb-8 last:pb-0">
                       <div
                         className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 ${
                           checkpoint.status === '3'
                             ? 'border-accent bg-accent/10'
-                            : 'border-muted bg-surface2'
+                            : 'border-white/[0.1] bg-white/[0.04]'
                         }`}
                       >
                         {checkpoint.status === '3' ? (
                           <CheckCircle2 className="h-4 w-4 text-accent" />
                         ) : (
-                          <div className="h-2.5 w-2.5 rounded-full bg-muted" />
+                          <div className="h-2.5 w-2.5 rounded-full bg-muted/40" />
                         )}
                       </div>
                       <div className="min-w-0 flex-1 space-y-1 pt-1">
@@ -449,18 +456,18 @@ export default function Products() {
                           <p className="font-medium text-text">
                             {checkpoint.notes || statusLabels[checkpoint.status] || 'Update'}
                           </p>
-                          <span className="font-mono text-xs text-muted">
+                          <span className="font-mono text-xs text-muted/60">
                             {formatDate(checkpoint.timestamp)}
                           </span>
                         </div>
-                        <p className="text-sm text-muted flex items-center gap-1">
+                        <p className="flex items-center gap-1 text-sm text-muted">
                           <MapPin className="h-3 w-3" />
                           {checkpoint.location}
                         </p>
                         <Badge variant={statusVariant[checkpoint.status] || 'default'} className="mt-1">
                           {statusLabels[checkpoint.status] || checkpoint.status}
                         </Badge>
-                        <p className="font-mono text-xs text-muted/60">
+                        <p className="font-mono text-xs text-muted/40">
                           By {formatAddress(checkpoint.handler_address)}
                         </p>
                       </div>
@@ -470,24 +477,23 @@ export default function Products() {
               )}
             </Card>
 
-            {/* Custody History */}
             <Card>
               <h3 className="mb-6 font-semibold text-text">Custody Transfers</h3>
               {transfers.length === 0 ? (
                 <p className="text-sm text-muted">No custody transfers available.</p>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {transfers.map((transfer) => (
                     <div
                       key={transfer.id}
-                      className="rounded-lg bg-surface2 p-3 transition-colors hover:bg-surface2/80"
+                      className="rounded-xl bg-white/[0.02] p-3 transition-colors hover:bg-white/[0.04]"
                     >
                       <div className="flex items-center gap-2 text-xs text-muted">
                         <span className="font-mono">{formatAddress(transfer.from_address)}</span>
                         <ArrowRight className="h-3 w-3 text-accent" />
                         <span className="font-mono">{formatAddress(transfer.to_address)}</span>
                       </div>
-                      <p className="mt-2 text-xs text-muted/60">
+                      <p className="mt-2 text-xs text-muted/50">
                         {formatDate(transfer.timestamp)}
                       </p>
                     </div>
@@ -500,13 +506,13 @@ export default function Products() {
       )}
 
       {!product && !loadingDetail && !productError && !submittedId && (
-        <div className="flex flex-col items-center justify-center rounded-card border border-dashed border-border py-16 text-center">
-          <Package className="h-12 w-12 text-muted/30" />
-          <p className="mt-4 text-muted">Enter a product ID to view its details</p>
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.06] bg-white/[0.02] py-16 text-center backdrop-blur-xl">
+          <Package className="h-12 w-12 text-muted/20" />
+          <p className="mt-4 text-sm text-muted">Enter a product ID to view its details</p>
         </div>
       )}
 
-      {/* ─── Add/Edit Modal ───────────────────────────────────────────────── */}
+      {/* ─── Add/Edit Modal ────────────────────────────────────────── */}
       <Modal
         open={modalOpen}
         onClose={() => {
@@ -520,7 +526,7 @@ export default function Products() {
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {mutationError && (
-            <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+            <div className="rounded-xl border border-red-500/20 bg-red-500/[0.06] p-3 text-sm text-red-400">
               {mutationError instanceof Error ? mutationError.message : 'An error occurred'}
             </div>
           )}
@@ -532,7 +538,7 @@ export default function Products() {
             <input
               {...register('name')}
               placeholder="e.g., Organic Coffee Beans"
-              className="w-full rounded-button border border-border bg-bg py-2.5 px-4 text-sm text-text placeholder-muted outline-none transition-colors focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+              className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
             />
             {errors.name && (
               <p className="mt-1 text-xs text-red-400">{errors.name.message}</p>
@@ -546,7 +552,7 @@ export default function Products() {
             <input
               {...register('manufacturer')}
               placeholder="0x..."
-              className="w-full rounded-button border border-border bg-bg py-2.5 px-4 text-sm text-text placeholder-muted outline-none transition-colors focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+              className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
             />
             {errors.manufacturer && (
               <p className="mt-1 text-xs text-red-400">{errors.manufacturer.message}</p>
@@ -560,7 +566,7 @@ export default function Products() {
             <input
               {...register('metadata_uri')}
               placeholder="https://..."
-              className="w-full rounded-button border border-border bg-bg py-2.5 px-4 text-sm text-text placeholder-muted outline-none transition-colors focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+              className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
             />
             {errors.metadata_uri && (
               <p className="mt-1 text-xs text-red-400">{errors.metadata_uri.message}</p>
