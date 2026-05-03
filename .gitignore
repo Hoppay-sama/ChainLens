@@ -96,3 +96,7 @@ deployed-contracts.json
 
 # Cursor IDE rules
 .cursor/
+
+#.planning
+.planning/
+scripts/
