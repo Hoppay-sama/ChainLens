@@ -1,136 +1,98 @@
 # Veritras
 
-> Blockchain-powered supply chain analytics platform
+> **Transparent supply chain tracking powered by blockchain.**
 
-Veritras provides transparent, end-to-end visibility into supply chain operations by leveraging on-chain provenance data, off-chain indexing, and an interactive analytics dashboard.
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Visit_Now-4ade80?style=for-the-badge&logo=vercel)](https://veritras.vercel.app)
+[![Backend](https://img.shields.io/badge/API_Status-Online-60a5fa?style=for-the-badge)](https://chainlens-4qvy.onrender.com/health)
 
 ---
 
-## Architecture
+## What is Veritras?
 
-```
-┌─────────────────┐
-│    Frontend     │  React + Vite (Port 3000 / 5173)
-│   (Next.js?)    │
-└────────┬────────┘
-         │ HTTP / REST / WebSocket
-         ▼
-┌─────────────────┐
-│     Backend     │  Python + FastAPI (Port 8000)
-│  (indexer API)  │
-└────────┬────────┘
-         │ SQLAlchemy / asyncpg
-         ▼
-┌─────────────────┐
-│   PostgreSQL    │  Postgres 15 (Port 5432)
-└─────────────────┘
-         ▲
-         │ Web3 / JSON-RPC
-┌─────────────────┐
-│   Blockchain    │  Hardhat / Local EVM
-│  (Solidity)     │
-└─────────────────┘
-```
+Veritras is a blockchain-powered supply chain analytics platform that brings **transparency, traceability, and trust** to product journeys. From manufacturer to doorstep, every checkpoint is recorded on the Ethereum Sepolia testnet — creating an immutable, verifiable history that anyone can audit.
+
+---
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **Product Registration** | Register products on-chain with unique IDs, manufacturer details, and IPFS metadata. |
+| **Shipment Tracking** | Follow shipments through a state-machine-driven lifecycle: Created → In Transit → At Checkpoint → Delivered. |
+| **Custody Transfers** | Every handoff is logged with timestamps, locations, and handler addresses. |
+| **Verification Portal** | Enter any product ID to instantly verify its on-chain provenance against off-chain records. |
+| **Analytics Dashboard** | Real-time KPIs, anomaly detection, and bottleneck analysis powered by Pandas. |
+| **Export Reports** | Download analytics as CSV or PDF for auditing and compliance. |
+| **Web3 Wallet Login** | Connect with MetaMask, Rainbow, or WalletConnect — no passwords needed. |
 
 ---
 
 ## Tech Stack
 
-| Layer        | Technology                        |
-| ------------ | --------------------------------- |
-| Blockchain   | Solidity, Hardhat, Ethers.js      |
-| Backend      | Python 3.11, FastAPI, SQLAlchemy  |
-| Frontend     | React, TypeScript, Vite           |
-| Database     | PostgreSQL 15                     |
-| CI/CD        | GitHub Actions                    |
-| Deployment   | Docker, Docker Compose            |
+| Layer | Technology |
+|-------|------------|
+| **Blockchain** | Solidity 0.8.19, Hardhat, Sepolia Testnet |
+| **Smart Contracts** | ProductRegistry, ShipmentTracker (92.86% test coverage) |
+| **Backend** | Python, FastAPI, SQLAlchemy, Web3.py, Neon PostgreSQL |
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, RainbowKit |
+| **Analytics** | Recharts, Pandas, Z-score anomaly detection |
+| **Deployment** | Vercel (Frontend), Render (Backend), Neon (Database) |
 
 ---
 
-## Directory Structure
+## Live Application
 
-```
-Veritras/
-├── .github/workflows/   # CI/CD pipelines
-├── blockchain/          # Smart contracts & Hardhat project
-├── backend/             # Python API & indexer
-├── frontend/            # React web application
-├── docker-compose.yml   # Local orchestration
-└── README.md
-```
+| Service | URL | Status |
+|---------|-----|--------|
+| **Frontend** | [veritras.vercel.app](https://veritras.vercel.app) | Online |
+| **API** | [chainlens-4qvy.onrender.com](https://chainlens-4qvy.onrender.com) | Online |
+| **Health Check** | `/health` | Database & Web3 Connected |
+
+> **Note:** The app runs on the **Sepolia Testnet**. You'll need test ETH to register products and create shipments. [Get free Sepolia ETH](https://sepoliafaucet.com/)
 
 ---
 
-## Setup
+## How It Works
 
-### Prerequisites
-
-- Docker & Docker Compose
-- Node.js 18+
-- Python 3.11+
-
-### 1. Blockchain
-
-```bash
-cd blockchain
-cp .env.example .env
-npm install
-npx hardhat compile
-npx hardhat test
 ```
-
-### 2. Backend
-
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate  # .venv\Scripts\activate on Windows
-pip install -r requirements.txt
-# TODO: add migration and seed commands
-```
-
-### 3. Frontend
-
-```bash
-cd frontend
-cp .env.example .env.local
-npm install
-npm run dev
-```
-
-### 4. Full Stack (Docker)
-
-```bash
-docker compose up --build
+Manufacturer registers product
+        |
+        v
+Product ID minted on-chain (Sepolia)
+        |
+        v
+Shipment created with origin & destination
+        |
+        v
+Checkpoints added at each handoff (location, handler, status)
+        |
+        v
+Dashboard visualizes real-time analytics
+        |
+        v
+Anyone can verify provenance by product ID
 ```
 
 ---
 
-## Deployment
+## Project Origins
 
-> **TODO**: Add production deployment instructions (e.g., Render, AWS, or GCP).
-
-- Backend container image: `./backend/Dockerfile`
-- Frontend container image: `./frontend/Dockerfile`
-- Database: managed PostgreSQL (recommended for production)
+Veritras was built as a **portfolio project** to demonstrate full-stack blockchain application development. It combines on-chain provenance with off-chain indexing and an interactive analytics layer — bridging the gap between smart contracts and user-friendly interfaces.
 
 ---
 
 ## AI Usage Disclosure
 
-Parts of this project—including scaffolding, configuration, documentation, and certain utility modules—were generated or assisted by AI (large language models) and subsequently reviewed by human developers. All AI-generated code was audited for correctness, security, and adherence to project standards before inclusion.
-
----
-
-## Live URLs
-
-| Environment | URL                           | Status |
-| ----------- | ----------------------------- | ------ |
-| Production  | https://veritras.example.com | TBD    |
-| Staging     | https://staging.veritras.io  | TBD    |
+Parts of this project — including scaffolding, configuration, documentation, and utility modules — were generated or assisted by AI (large language models) and subsequently reviewed by human developers. All AI-generated code was audited for correctness, security, and adherence to project standards before inclusion.
 
 ---
 
 ## License
 
-[MIT](LICENSE) — unless specified otherwise.
+[MIT](LICENSE)
+
+---
+
+<p align="center">
+  <a href="https://veritras.vercel.app">Try the Live Demo</a>
+</p>
