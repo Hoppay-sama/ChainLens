@@ -77,13 +77,7 @@ Anyone can verify provenance by product ID
 
 ## Project Origins
 
-Veritras was built as a **portfolio project** to demonstrate full-stack blockchain application development. It combines on-chain provenance with off-chain indexing and an interactive analytics layer — bridging the gap between smart contracts and user-friendly interfaces.
-
----
-
-## AI Usage Disclosure
-
-Parts of this project — including scaffolding, configuration, documentation, and utility modules — were generated or assisted by AI (large language models) and subsequently reviewed by human developers. All AI-generated code was audited for correctness, security, and adherence to project standards before inclusion.
+Veritras was built as a **portfolio project** to demonstrate full-stack blockchain application development. It combines on-chain provenance with off-chain indexing and an interactive analytics layer, bridging the gap between smart contracts and user-friendly interfaces.
 
 ---
 
