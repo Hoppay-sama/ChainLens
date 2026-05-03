@@ -1,4 +1,4 @@
-# ChainLens Backend — Render Deployment Configuration
+# Veritras Backend — Render Deployment Configuration
 # Documentation: https://render.com/docs/web-services
 
 # This file tells Render how to build and deploy your FastAPI backend.
@@ -6,7 +6,7 @@
 
 services:
   - type: web
-    name: chainlens-api
+    name: veritras-api
     runtime: docker
     rootDir: backend
     dockerfilePath: ./Dockerfile

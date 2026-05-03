@@ -22,7 +22,7 @@ export default function Layout() {
               <Hexagon className="h-5 w-5 text-accent" strokeWidth={2} />
             </div>
             <span className="font-serif text-xl tracking-wide text-text">
-              ChainLens
+              Veritras
             </span>
           </div>
 

@@ -91,7 +91,7 @@ export async function exportAnalytics(format: 'csv' | 'pdf', startDate?: string,
   const url = window.URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `chainlens-export.${format}`
+  a.download = `veritras-export.${format}`
   a.click()
   window.URL.revokeObjectURL(url)
 }

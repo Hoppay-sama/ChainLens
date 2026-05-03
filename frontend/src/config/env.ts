@@ -33,7 +33,7 @@ export function validateEnv(): void {
 
   if (warnings.length > 0) {
     console.warn(
-      '[ChainLens] Environment validation warnings:\n' +
+      '[Veritras] Environment validation warnings:\n' +
         warnings.join('\n') +
         '\nPlease check your .env file or hosting environment variables.'
     )

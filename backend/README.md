@@ -1,6 +1,6 @@
-# ChainLens Backend
+# Veritras Backend
 
-Supply chain traceability backend for ChainLens. Indexes blockchain events from Ethereum (Sepolia testnet) and serves analytics via a FastAPI REST API.
+Supply chain traceability backend for Veritras. Indexes blockchain events from Ethereum (Sepolia testnet) and serves analytics via a FastAPI REST API.
 
 ## Prerequisites
 
@@ -40,8 +40,8 @@ Supply chain traceability backend for ChainLens. Indexes blockchain events from 
 
 Build and run with Docker:
 ```bash
-docker build -t chainlens-backend .
-docker run -p 8000:8000 --env-file .env chainlens-backend
+docker build -t veritras-backend .
+docker run -p 8000:8000 --env-file .env veritras-backend
 ```
 
 ## Database Migrations
@@ -93,9 +93,9 @@ backend/
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql+psycopg2://user:password@db:5432/chainlens` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql+psycopg2://user:password@db:5432/veritras` |
 | `ENVIRONMENT` | Set to `production` to enable production mode | `production` |
-| `CORS_ORIGINS` | Comma-separated list of allowed frontend domains | `https://chainlens.vercel.app` |
+| `CORS_ORIGINS` | Comma-separated list of allowed frontend domains | `https://veritras.vercel.app` |
 | `SEPOLIA_RPC_URL` | Ethereum Sepolia RPC endpoint | `https://sepolia.infura.io/v3/...` |
 | `PRODUCT_REGISTRY_CONTRACT` | Product registry contract address | `0x...` |
 | `SHIPMENT_TRACKER_CONTRACT` | Shipment tracker contract address | `0x...` |
@@ -105,8 +105,8 @@ backend/
 The Docker image uses Gunicorn with Uvicorn workers by default:
 
 ```bash
-docker build -t chainlens-backend .
-docker run -p 8000:8000 --env-file .env chainlens-backend
+docker build -t veritras-backend .
+docker run -p 8000:8000 --env-file .env veritras-backend
 ```
 
 Or run locally with Gunicorn:

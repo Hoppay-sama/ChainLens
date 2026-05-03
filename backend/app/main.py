@@ -17,7 +17,7 @@ from app.core.database import engine, Base
 from app.core.limiter import limiter
 from app.api.routes import products, shipments, analytics
 
-logger = logging.getLogger("chainlens.api")
+logger = logging.getLogger("veritras.api")
 
 w3: Optional[Web3] = None
 if settings.sepolia_rpc_url:
@@ -30,16 +30,17 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="ChainLens API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Veritras API", version="0.1.0", lifespan=lifespan)
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
 def parse_cors_origins(cors_origins: str) -> list[str]:
-    origins = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
+    origins = [origin.strip().rstrip("/") for origin in cors_origins.split(",") if origin.strip()]
     if "*" in origins and len(origins) > 1:
         logger.warning("Wildcard '*' mixed with explicit origins; treating as allow-all")
+    logger.info("Parsed CORS origins: %s", origins)
     return origins
 
 

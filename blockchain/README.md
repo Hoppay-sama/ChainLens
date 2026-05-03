@@ -1,6 +1,6 @@
-# ChainLens Blockchain Layer
+# Veritras Blockchain Layer
 
-Smart contracts and Hardhat tooling for the ChainLens supply chain traceability platform.
+Smart contracts and Hardhat tooling for the Veritras supply chain traceability platform.
 
 ## Contracts
 

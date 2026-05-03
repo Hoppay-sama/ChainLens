@@ -1,8 +1,8 @@
-# ChainLens
+# Veritras
 
 > Blockchain-powered supply chain analytics platform
 
-ChainLens provides transparent, end-to-end visibility into supply chain operations by leveraging on-chain provenance data, off-chain indexing, and an interactive analytics dashboard.
+Veritras provides transparent, end-to-end visibility into supply chain operations by leveraging on-chain provenance data, off-chain indexing, and an interactive analytics dashboard.
 
 ---
 
@@ -50,7 +50,7 @@ ChainLens provides transparent, end-to-end visibility into supply chain operatio
 ## Directory Structure
 
 ```
-ChainLens/
+Veritras/
 ├── .github/workflows/   # CI/CD pipelines
 ├── blockchain/          # Smart contracts & Hardhat project
 ├── backend/             # Python API & indexer
@@ -108,7 +108,7 @@ docker compose up --build
 
 ## Deployment
 
-> **TODO**: Add production deployment instructions (e.g., Fly.io, Render, AWS, or GCP).
+> **TODO**: Add production deployment instructions (e.g., Render, AWS, or GCP).
 
 - Backend container image: `./backend/Dockerfile`
 - Frontend container image: `./frontend/Dockerfile`
@@ -126,8 +126,8 @@ Parts of this project—including scaffolding, configuration, documentation, and
 
 | Environment | URL                           | Status |
 | ----------- | ----------------------------- | ------ |
-| Production  | https://chainlens.example.com | TBD    |
-| Staging     | https://staging.chainlens.io  | TBD    |
+| Production  | https://veritras.example.com | TBD    |
+| Staging     | https://staging.veritras.io  | TBD    |
 
 ---
 

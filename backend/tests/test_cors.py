@@ -173,7 +173,7 @@ class TestCorsOriginParsing:
         assert result == ["*"]
 
     def test_wildcard_mixed_with_explicit_origins_triggers_warning(self, caplog):
-        with caplog.at_level(logging.WARNING, logger="chainlens.api"):
+        with caplog.at_level(logging.WARNING, logger="veritras.api"):
             result = parse_cors_origins("*,https://example.com")
         assert result == ["*", "https://example.com"]
         assert "Wildcard '*' mixed with explicit origins" in caplog.text
@@ -252,6 +252,14 @@ class TestCorsEdgeCases:
     def test_extra_whitespace_around_commas(self):
         result = parse_cors_origins("http://localhost:5173 , https://example.com")
         assert result == ["http://localhost:5173", "https://example.com"]
+
+    def test_trailing_slash_is_stripped(self):
+        result = parse_cors_origins("https://chain-lens-two.vercel.app/")
+        assert result == ["https://chain-lens-two.vercel.app"]
+
+    def test_trailing_slashes_on_multiple_origins_are_stripped(self):
+        result = parse_cors_origins("https://app.example.com/,https://admin.example.com/")
+        assert result == ["https://app.example.com", "https://admin.example.com"]
 
 
 class TestCorsDefaultConfig:

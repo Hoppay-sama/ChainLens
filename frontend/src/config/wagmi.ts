@@ -5,7 +5,7 @@ const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
 
 if (import.meta.env.PROD && !projectId) {
   throw new Error(
-    '[ChainLens] VITE_WALLETCONNECT_PROJECT_ID is required in production. ' +
+    '[Veritras] VITE_WALLETCONNECT_PROJECT_ID is required in production. ' +
       'Get a free Project ID at https://cloud.walletconnect.com'
   )
 }
@@ -15,7 +15,7 @@ const chains = import.meta.env.PROD
   : ([sepolia, hardhat] as const)
 
 export const rainbowKitConfig = getDefaultConfig({
-  appName: 'ChainLens',
+  appName: 'Veritras',
   projectId: projectId || 'YOUR_PROJECT_ID',
   chains,
   ssr: false,

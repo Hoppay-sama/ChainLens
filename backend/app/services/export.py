@@ -78,7 +78,7 @@ def export_to_pdf(db: Session, start_date: Optional[str], end_date: Optional[str
     story = []
 
     # Title
-    story.append(Paragraph("<b>ChainLens Supply Chain Report</b>", styles["Title"]))
+    story.append(Paragraph("<b>Veritras Supply Chain Report</b>", styles["Title"]))
     story.append(Spacer(1, 12))
 
     # Date range

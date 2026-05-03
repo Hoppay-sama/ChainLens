@@ -7,13 +7,13 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: chainlens
-      POSTGRES_PASSWORD: chainlens
-      POSTGRES_DB: chainlens
+      POSTGRES_USER: veritras
+      POSTGRES_PASSWORD: veritras
+      POSTGRES_DB: veritras
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U chainlens -d chainlens"]
+      test: ["CMD-SHELL", "pg_isready -U veritras -d veritras"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,7 +26,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+psycopg2://chainlens:chainlens@db:5432/chainlens
+      DATABASE_URL: postgresql+psycopg2://veritras:veritras@db:5432/veritras
     depends_on:
       db:
         condition: service_healthy

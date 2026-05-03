@@ -1,4 +1,4 @@
-# ChainLens Frontend
+# Veritras Frontend
 
 A React 18 + TypeScript dashboard for supply chain traceability. Connects to MetaMask via RainbowKit and visualizes blockchain-verified product data.
 
@@ -54,10 +54,10 @@ npm run build
 
 ```bash
 # Build image
-docker build -t chainlens-frontend .
+docker build -t veritras-frontend .
 
 # Run container
-docker run -p 80:80 chainlens-frontend
+docker run -p 80:80 veritras-frontend
 ```
 
 ### Environment Variables

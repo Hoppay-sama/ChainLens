@@ -89,7 +89,7 @@ def test_export_csv(client_fixture, seeded_db):
     response = client_fixture.get("/analytics/export?format=csv")
     assert response.status_code == 200
     assert response.headers["content-type"] == "text/csv; charset=utf-8"
-    assert "chainlens_export.csv" in response.headers["content-disposition"]
+    assert "veritras_export.csv" in response.headers["content-disposition"]
     body = response.text
     assert "product_id" in body or body == ""
 
@@ -98,4 +98,4 @@ def test_export_pdf(client_fixture, seeded_db):
     response = client_fixture.get("/analytics/export?format=pdf")
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/pdf"
-    assert "chainlens_export.pdf" in response.headers["content-disposition"]
+    assert "veritras_export.pdf" in response.headers["content-disposition"]

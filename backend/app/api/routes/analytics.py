@@ -56,12 +56,12 @@ def export_analytics(
         return StreamingResponse(
             iter([content]),
             media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=chainlens_export.csv"},
+            headers={"Content-Disposition": "attachment; filename=veritras_export.csv"},
         )
     else:
         content = export_to_pdf(db, start_date, end_date)
         return StreamingResponse(
             iter([content]),
             media_type="application/pdf",
-            headers={"Content-Disposition": "attachment; filename=chainlens_export.pdf"},
+            headers={"Content-Disposition": "attachment; filename=veritras_export.pdf"},
         )

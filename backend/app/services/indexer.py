@@ -71,7 +71,7 @@ def save_indexer_state(state: Dict):
 
 class EventIndexer:
     """
-    Web3.py-based blockchain event indexer for ChainLens.
+    Web3.py-based blockchain event indexer for Veritras.
     Polls the configured Ethereum RPC for ProductRegistered, CheckpointRecorded,
     CustodyTransferred, and DeliveryCompleted events, then persists them to the database.
     """
