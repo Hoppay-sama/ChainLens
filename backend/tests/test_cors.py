@@ -1,0 +1,294 @@
+"""
+Regression tests for CORS configuration.
+
+Ensures the backend does not block the production frontend due to
+missing or mis-parsed CORS_ORIGINS environment variables.
+"""
+
+import importlib
+import logging
+
+import pytest
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.testclient import TestClient
+
+from app.main import app as main_app, parse_cors_origins, origins as configured_origins
+from app.models.product import Product
+from app.models.shipment import Checkpoint
+from datetime import datetime, timezone
+
+
+# Determine a valid test origin based on the currently loaded app configuration.
+# When allow_credentials=True with a wildcard fallback, compliant middleware
+# reflects the actual origin instead of returning "*".
+if configured_origins == ["*"]:
+    TEST_ORIGIN = "https://chain-lens-two.vercel.app"
+    EXPECTED_HEADER = "*"
+    EXPECTED_CREDENTIALS = None
+elif configured_origins:
+    TEST_ORIGIN = configured_origins[0]
+    EXPECTED_HEADER = TEST_ORIGIN
+    EXPECTED_CREDENTIALS = "true"
+else:
+    # Empty origins fallback to allow_origins=["*"] but allow_credentials=True
+    # Starlette reflects the request origin in this mode.
+    TEST_ORIGIN = "https://chain-lens-two.vercel.app"
+    EXPECTED_HEADER = TEST_ORIGIN
+    EXPECTED_CREDENTIALS = "true"
+
+
+@pytest.fixture(scope="function")
+def seeded_db(db_session):
+    """Seed the database with a product and checkpoint for CORS endpoint tests."""
+    product = Product(
+        product_id="0x" + "a" * 64,
+        name="Test Product",
+        description="A test product",
+        metadata_uri="ipfs://test",
+        manufacturer_address="0x1234567890123456789012345678901234567890",
+        registered_at=datetime.now(timezone.utc),
+        block_number=100,
+        tx_hash="0xdeadbeef",
+    )
+    db_session.add(product)
+    db_session.commit()
+
+    checkpoint = Checkpoint(
+        product_id=product.product_id,
+        location="Test Location",
+        status="1",
+        handler_address="0xhandler",
+        notes="Test note",
+        timestamp=datetime.now(timezone.utc),
+        block_number=101,
+        tx_hash="0xcafebabe",
+    )
+    db_session.add(checkpoint)
+    db_session.commit()
+    return db_session
+
+
+def _build_app_with_cors(cors_origins_str: str) -> FastAPI:
+    """Create a minimal FastAPI app with CORS middleware using production logic."""
+    test_app = FastAPI()
+    origins = parse_cors_origins(cors_origins_str)
+    has_wildcard = "*" in origins
+    allow_credentials = not has_wildcard
+
+    test_app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins if origins else ["*"],
+        allow_credentials=allow_credentials,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    @test_app.get("/products")
+    def products():
+        return []
+
+    @test_app.get("/analytics/kpis")
+    def kpis():
+        return {}
+
+    return test_app
+
+
+class TestCorsHeadersOnResponses:
+    """Verify CORS headers are returned by real API endpoints."""
+
+    def test_products_preflight_includes_allow_origin(self, client_fixture, seeded_db):
+        response = client_fixture.options(
+            "/products/",
+            headers={
+                "Origin": TEST_ORIGIN,
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        assert response.status_code == 200
+        assert "access-control-allow-origin" in response.headers
+        if EXPECTED_CREDENTIALS:
+            assert response.headers.get("access-control-allow-credentials") == EXPECTED_CREDENTIALS
+        else:
+            assert "access-control-allow-credentials" not in response.headers
+
+    def test_products_get_includes_allow_origin(self, client_fixture, seeded_db):
+        response = client_fixture.get(
+            "/products/",
+            headers={"Origin": TEST_ORIGIN},
+        )
+        assert response.status_code == 200
+        assert response.headers.get("access-control-allow-origin") == EXPECTED_HEADER
+        if EXPECTED_CREDENTIALS:
+            assert response.headers.get("access-control-allow-credentials") == EXPECTED_CREDENTIALS
+        else:
+            assert "access-control-allow-credentials" not in response.headers
+
+    def test_analytics_kpis_preflight_includes_allow_origin(self, client_fixture, seeded_db):
+        response = client_fixture.options(
+            "/analytics/kpis",
+            headers={
+                "Origin": TEST_ORIGIN,
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        assert response.status_code == 200
+        assert "access-control-allow-origin" in response.headers
+        if EXPECTED_CREDENTIALS:
+            assert response.headers.get("access-control-allow-credentials") == EXPECTED_CREDENTIALS
+        else:
+            assert "access-control-allow-credentials" not in response.headers
+
+    def test_analytics_kpis_get_includes_allow_origin(self, client_fixture, seeded_db):
+        response = client_fixture.get(
+            "/analytics/kpis",
+            headers={"Origin": TEST_ORIGIN},
+        )
+        assert response.status_code == 200
+        assert response.headers.get("access-control-allow-origin") == EXPECTED_HEADER
+        if EXPECTED_CREDENTIALS:
+            assert response.headers.get("access-control-allow-credentials") == EXPECTED_CREDENTIALS
+        else:
+            assert "access-control-allow-credentials" not in response.headers
+
+
+class TestCorsOriginParsing:
+    """Unit tests for parse_cors_origins."""
+
+    def test_comma_separated_origins(self):
+        result = parse_cors_origins("http://localhost:5173,https://example.com")
+        assert result == ["http://localhost:5173", "https://example.com"]
+
+    def test_whitespace_is_stripped(self):
+        result = parse_cors_origins("  http://localhost:5173  ,  https://example.com  ")
+        assert result == ["http://localhost:5173", "https://example.com"]
+
+    def test_empty_strings_are_filtered(self):
+        result = parse_cors_origins("http://localhost:5173,,https://example.com")
+        assert result == ["http://localhost:5173", "https://example.com"]
+
+    def test_wildcard_is_preserved(self):
+        result = parse_cors_origins("*")
+        assert result == ["*"]
+
+    def test_wildcard_mixed_with_explicit_origins_triggers_warning(self, caplog):
+        with caplog.at_level(logging.WARNING, logger="chainlens.api"):
+            result = parse_cors_origins("*,https://example.com")
+        assert result == ["*", "https://example.com"]
+        assert "Wildcard '*' mixed with explicit origins" in caplog.text
+
+
+class TestCorsProductionScenario:
+    """Simulate explicit production CORS_ORIGINS configuration."""
+
+    def test_production_origin_is_allowed(self):
+        app = _build_app_with_cors("https://chain-lens-two.vercel.app")
+        client = TestClient(app)
+        response = client.get(
+            "/products",
+            headers={"Origin": "https://chain-lens-two.vercel.app"},
+        )
+        assert response.status_code == 200
+        assert response.headers.get("access-control-allow-origin") == "https://chain-lens-two.vercel.app"
+        assert response.headers.get("access-control-allow-credentials") == "true"
+
+    def test_unknown_origin_does_not_receive_cors_headers(self):
+        app = _build_app_with_cors("https://chain-lens-two.vercel.app")
+        client = TestClient(app)
+        response = client.get(
+            "/products",
+            headers={"Origin": "https://evil.com"},
+        )
+        assert response.status_code == 200
+        assert "access-control-allow-origin" not in response.headers
+
+    def test_preflight_unknown_origin_does_not_receive_allow_origin_header(self):
+        app = _build_app_with_cors("https://chain-lens-two.vercel.app")
+        client = TestClient(app)
+        response = client.options(
+            "/products",
+            headers={
+                "Origin": "https://evil.com",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        # Starlette returns 400 for disallowed preflight requests
+        assert response.status_code == 400
+        assert "access-control-allow-origin" not in response.headers
+
+
+class TestCorsWildcardBehavior:
+    """Verify wildcard-only CORS behavior."""
+
+    def test_wildcard_allows_any_origin(self):
+        app = _build_app_with_cors("*")
+        client = TestClient(app)
+        response = client.get(
+            "/products",
+            headers={"Origin": "https://any-origin.com"},
+        )
+        assert response.status_code == 200
+        assert response.headers.get("access-control-allow-origin") == "*"
+
+    def test_wildcard_does_not_allow_credentials(self):
+        app = _build_app_with_cors("*")
+        client = TestClient(app)
+        response = client.get(
+            "/products",
+            headers={"Origin": "https://any-origin.com"},
+        )
+        assert response.status_code == 200
+        assert "access-control-allow-credentials" not in response.headers
+
+
+class TestCorsEdgeCases:
+    """Edge cases in CORS_ORIGINS environment variable formatting."""
+
+    def test_trailing_comma(self):
+        result = parse_cors_origins("http://localhost:5173,")
+        assert result == ["http://localhost:5173"]
+
+    def test_extra_whitespace_around_commas(self):
+        result = parse_cors_origins("http://localhost:5173 , https://example.com")
+        assert result == ["http://localhost:5173", "https://example.com"]
+
+
+class TestCorsDefaultConfig:
+    """Verify the Settings default prevents silent CORS breakage."""
+
+    def test_default_cors_origins_is_empty(self):
+        from app.core.config import Settings
+
+        field = Settings.model_fields["cors_origins"]
+        assert field.default == ""
+
+
+class TestCorsProductionGuard:
+    """Verify the app refuses to start in production with unsafe CORS config."""
+
+    def test_empty_cors_origins_raises_runtime_error_in_production(self, monkeypatch):
+        import app.main as main_module
+
+        monkeypatch.setattr(main_module.settings, "environment", "production")
+        monkeypatch.setattr(main_module.settings, "cors_origins", "")
+        with pytest.raises(RuntimeError, match="CORS_ORIGINS must be set"):
+            importlib.reload(main_module)
+
+        # Restore original state
+        monkeypatch.setattr(main_module.settings, "environment", "development")
+        monkeypatch.setattr(main_module.settings, "cors_origins", "")
+        importlib.reload(main_module)
+
+    def test_wildcard_cors_origins_raises_runtime_error_in_production(self, monkeypatch):
+        import app.main as main_module
+
+        monkeypatch.setattr(main_module.settings, "environment", "production")
+        monkeypatch.setattr(main_module.settings, "cors_origins", "*")
+        with pytest.raises(RuntimeError, match="CORS_ORIGINS must be set"):
+            importlib.reload(main_module)
+
+        # Restore original state
+        monkeypatch.setattr(main_module.settings, "environment", "development")
+        monkeypatch.setattr(main_module.settings, "cors_origins", "")
+        importlib.reload(main_module)

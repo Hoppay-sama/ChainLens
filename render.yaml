@@ -11,6 +11,8 @@ services:
     rootDir: backend
     dockerfilePath: ./Dockerfile
     envVars:
+      - key: ENVIRONMENT
+        value: production
       - key: API_HOST
         value: 0.0.0.0
       - key: API_PORT
@@ -23,9 +25,10 @@ services:
         value: 0x1F76018532D619194f6628ADc186e3c86FcB5AaA
       - key: SHIPMENT_TRACKER_CONTRACT
         value: 0x95b09C0aeD53f6b63C072F4ecaC18861FcbBFB30
-      # Secrets to set in Render Dashboard:
+      - key: CORS_ORIGINS
+        value: https://chain-lens-two.vercel.app
+      # Secrets to set in Render Dashboard (can also override CORS_ORIGINS there):
       # - DATABASE_URL
       # - SEPOLIA_RPC_URL
-      # - CORS_ORIGINS
     healthCheckPath: /health
     autoDeploy: true

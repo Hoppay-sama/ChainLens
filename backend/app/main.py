@@ -36,10 +36,28 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
+def parse_cors_origins(cors_origins: str) -> list[str]:
+    origins = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
+    if "*" in origins and len(origins) > 1:
+        logger.warning("Wildcard '*' mixed with explicit origins; treating as allow-all")
+    return origins
+
+
+origins = parse_cors_origins(settings.cors_origins)
+has_wildcard = "*" in origins
+
+if settings.is_production and (not origins or has_wildcard):
+    raise RuntimeError(
+        "CORS_ORIGINS must be set to explicit origins in production. "
+        "Wildcard '*' is not allowed with credentials enabled."
+    )
+
+allow_credentials = not has_wildcard
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in settings.cors_origins.split(",")],
-    allow_credentials=True,
+    allow_origins=origins if origins else ["*"],
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

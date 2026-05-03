@@ -5,7 +5,8 @@ from pydantic import Field
 class Settings(BaseSettings):
     environment: str = Field(default="development")
     database_url: str = Field(default="sqlite:///./chainlens.db")
-    cors_origins: str = Field(default="http://localhost:5173,http://localhost:3000")
+    # Default to empty string. In production, CORS_ORIGINS must be set explicitly.
+    cors_origins: str = Field(default="")
     sepolia_rpc_url: str = Field(default="")
     product_registry_contract: str = Field(default="")
     shipment_tracker_contract: str = Field(default="")
