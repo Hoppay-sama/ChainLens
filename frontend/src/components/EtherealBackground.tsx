@@ -12,6 +12,7 @@ interface Particle {
 
 export default function EtherealBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const isMountedRef = useRef(true)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -20,7 +21,7 @@ export default function EtherealBackground() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    let animationFrameId: number
+    let animationFrameId = 0
     let particles: Particle[] = []
     let time = 0
 
@@ -144,11 +145,16 @@ export default function EtherealBackground() {
       animationFrameId = requestAnimationFrame(draw)
     }
 
-    resize()
-    window.addEventListener('resize', resize)
-    animationFrameId = requestAnimationFrame(draw)
+    const initTimeout = setTimeout(() => {
+      if (!isMountedRef.current) return
+      resize()
+      window.addEventListener('resize', resize)
+      animationFrameId = requestAnimationFrame(draw)
+    }, 0)
 
     return () => {
+      isMountedRef.current = false
+      clearTimeout(initTimeout)
       window.removeEventListener('resize', resize)
       cancelAnimationFrame(animationFrameId)
     }

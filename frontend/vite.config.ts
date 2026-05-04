@@ -16,5 +16,16 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
     sourcemap: mode === 'development',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['framer-motion', 'lucide-react'],
+          'web3-vendor': ['wagmi', 'viem', '@rainbow-me/rainbowkit'],
+          'charts-vendor': ['recharts'],
+          'query-vendor': ['@tanstack/react-query'],
+        },
+      },
+    },
   },
 }))

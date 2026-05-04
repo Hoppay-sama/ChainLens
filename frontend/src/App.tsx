@@ -1,3 +1,4 @@
+import { lazy } from 'react'
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { WagmiProvider } from 'wagmi'
@@ -8,11 +9,12 @@ import { SpeedInsights } from '@vercel/speed-insights/react'
 import { rainbowKitConfig } from './config/wagmi'
 import EtherealBackground from './components/EtherealBackground'
 import Layout from './components/Layout'
-import Dashboard from './pages/Dashboard'
-import Products from './pages/Products'
-import Shipments from './pages/Shipments'
-import AnalyticsPage from './pages/Analytics'
-import Verify from './pages/Verify'
+
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Products = lazy(() => import('./pages/Products'))
+const Shipments = lazy(() => import('./pages/Shipments'))
+const AnalyticsPage = lazy(() => import('./pages/Analytics'))
+const Verify = lazy(() => import('./pages/Verify'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
