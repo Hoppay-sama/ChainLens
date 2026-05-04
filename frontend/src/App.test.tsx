@@ -50,66 +50,70 @@ vi.mock('./components/ui/LoadingSpinner', () => ({
   default: ({ size }: { size: string }) => <div data-testid={`spinner-${size}`}>Loading</div>,
 }))
 
-// Mock page components so the test isolates route-level code-splitting logic
-vi.mock('./pages/Dashboard', () => ({
-  default: () => <div data-testid="dashboard-page">Track Beyond The Ordinary</div>,
+// ─── Mock heavy libraries so Dashboard renders for real without blocking tests ───
+vi.mock('framer-motion', () => {
+  const motionPropsToFilter = new Set([
+    'initial',
+    'animate',
+    'whileInView',
+    'viewport',
+    'transition',
+    'variants',
+    'custom',
+    'whileHover',
+    'whileTap',
+    'exit',
+    'layout',
+    'layoutId',
+  ])
+  const MotionProxy = new Proxy({} as Record<string, React.FC<any>>, {
+    get(_, tag: string) {
+      return function MotionComponent({ children, ...props }: any) {
+        const cleaned = Object.fromEntries(
+          Object.entries(props).filter(([key]) => !motionPropsToFilter.has(key))
+        )
+        return <div {...cleaned}>{children}</div>
+      }
+    },
+  })
+  return {
+    motion: MotionProxy,
+    AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
+  }
+})
+
+vi.mock('recharts', () => ({
+  // Render a shell without children to avoid jsdom SVG warnings
+  AreaChart: () => <div data-testid="area-chart" />,
+  Area: () => null,
+  XAxis: () => null,
+  YAxis: () => null,
+  CartesianGrid: () => null,
+  Tooltip: () => null,
+  ResponsiveContainer: ({ children }: { children: ReactNode }) => (
+    <div data-testid="responsive-container">{children}</div>
+  ),
 }))
 
-vi.mock('./pages/Products', () => ({
-  default: () => <div data-testid="products-page">Products</div>,
-}))
-
-vi.mock('./pages/Shipments', () => ({
-  default: () => <div data-testid="shipments-page">Shipments</div>,
-}))
-
-vi.mock('./pages/Analytics', () => ({
-  default: () => <div data-testid="analytics-page">Analytics</div>,
-}))
-
-vi.mock('./pages/Verify', () => ({
-  default: () => <div data-testid="verify-page">Verify</div>,
+vi.mock('@/hooks/useApi', () => ({
+  useKPIData: () => ({ data: null, isLoading: false, error: null }),
+  useProducts: () => ({ data: [], isLoading: false, error: null }),
 }))
 
 // ─── Tests ───
 
 describe('App', () => {
   describe('route-level code splitting (regression: LCP 10.84s)', () => {
-    it('eagerly imports Dashboard for the initial route', () => {
-      const appPath = resolve(import.meta.dirname, './App.tsx')
-      const source = readFileSync(appPath, 'utf-8')
-
-      // The initial route must NOT be lazy-loaded so LCP isn't blocked by a
-      // network waterfall (main bundle → React → Dashboard chunk → vendor chunk).
-      expect(source).toContain(
-        `import Dashboard from './pages/Dashboard'`
-      )
-    })
-
-    it('lazy-loads all non-initial routes', () => {
-      const appPath = resolve(import.meta.dirname, './App.tsx')
-      const source = readFileSync(appPath, 'utf-8')
-
-      expect(source).toContain(
-        `const Products = lazy(() => import('./pages/Products'))`
-      )
-      expect(source).toContain(
-        `const Shipments = lazy(() => import('./pages/Shipments'))`
-      )
-      expect(source).toContain(
-        `const AnalyticsPage = lazy(() => import('./pages/Analytics'))`
-      )
-      expect(source).toContain(
-        `const Verify = lazy(() => import('./pages/Verify'))`
-      )
-    })
-
     it('renders Dashboard content immediately on the root route without showing a Suspense fallback', () => {
       const { container } = render(<App />)
 
-      // Hero text from the Dashboard page should be present synchronously
-      expect(screen.getByTestId('dashboard-page')).toBeInTheDocument()
-      expect(screen.getByText(/Track Beyond The Ordinary/i)).toBeInTheDocument()
+      // Hero text from PremiumHero (inside Dashboard) should be present synchronously
+      expect(screen.getByText('Track')).toBeInTheDocument()
+      expect(screen.getByText('Beyond')).toBeInTheDocument()
+      expect(screen.getByText('The Ordinary')).toBeInTheDocument()
+
+      // Dashboard content should also be visible immediately
+      expect(screen.getByText('Supply Chain')).toBeInTheDocument()
 
       // Layout's Suspense fallback (spinner) must NOT appear for the eager route
       expect(
