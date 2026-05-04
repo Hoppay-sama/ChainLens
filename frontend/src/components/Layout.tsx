@@ -1,8 +1,10 @@
+import { Suspense } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import LoadingSpinner from './ui/LoadingSpinner'
 
 const navItems = [
   { to: '/', label: 'Dashboard' },
@@ -125,7 +127,15 @@ export default function Layout() {
 
       {/* Main Content */}
       <main className="relative z-10">
-        <Outlet />
+        <Suspense
+          fallback={
+            <div className="flex h-[calc(100vh-5rem)] items-center justify-center">
+              <LoadingSpinner size="lg" />
+            </div>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   )

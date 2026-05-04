@@ -12,6 +12,7 @@ interface Particle {
 
 export default function EtherealBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const isMountedRef = useRef(true)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -20,7 +21,7 @@ export default function EtherealBackground() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    let animationFrameId: number
+    let animationFrameId = 0
     let particles: Particle[] = []
     let time = 0
 
@@ -32,9 +33,17 @@ export default function EtherealBackground() {
       initParticles()
     }
 
+    const defer = (cb: () => void): number => {
+      const w = window as any
+      if (w.requestIdleCallback) {
+        return w.requestIdleCallback(cb, { timeout: 2000 })
+      }
+      return w.setTimeout(cb, 1500)
+    }
+
     const initParticles = () => {
       particles = []
-      const count = Math.floor((canvas.width * canvas.height) / 8000)
+      const count = Math.floor((canvas.width * canvas.height) / 12000)
       for (let i = 0; i < count; i++) {
         particles.push({
           x: Math.random() * canvas.width,
@@ -111,15 +120,7 @@ export default function EtherealBackground() {
         ctx.globalAlpha = p.opacity * flicker
         ctx.fill()
 
-        // Glow
-        const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 4)
-        glow.addColorStop(0, p.color)
-        glow.addColorStop(1, 'transparent')
-        ctx.fillStyle = glow
-        ctx.globalAlpha = p.opacity * flicker * 0.2
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.size * 4, 0, Math.PI * 2)
-        ctx.fill()
+
       })
 
       ctx.globalAlpha = 1
@@ -144,11 +145,22 @@ export default function EtherealBackground() {
       animationFrameId = requestAnimationFrame(draw)
     }
 
-    resize()
-    window.addEventListener('resize', resize)
-    animationFrameId = requestAnimationFrame(draw)
+    let idleHandle: number | undefined
+    idleHandle = defer(() => {
+      if (!isMountedRef.current) return
+      resize()
+      window.addEventListener('resize', resize)
+      animationFrameId = requestAnimationFrame(draw)
+    })
 
     return () => {
+      isMountedRef.current = false
+      const w = window as any
+      if (w.cancelIdleCallback) {
+        w.cancelIdleCallback(idleHandle!)
+      } else {
+        clearTimeout(idleHandle)
+      }
       window.removeEventListener('resize', resize)
       cancelAnimationFrame(animationFrameId)
     }
