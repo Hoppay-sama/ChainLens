@@ -1,6 +1,7 @@
 import pytest
 
 from app.models.product import Product
+from app.schemas.product import ProductResponse
 from datetime import datetime, timezone
 
 
@@ -52,7 +53,22 @@ def test_post_product_returns_created_product_with_generated_id(client_fixture, 
     assert data["product_id"].startswith("PROD-")
     assert len(data["product_id"]) == len("PROD-") + 8
     assert data["id"] is not None
-    assert data["created_at"] is not None
+    assert data["registered_at"] is not None
+
+
+def test_post_product_response_validates_against_schema(client_fixture, seeded_products):
+    """Regression test: POST /products response must conform to ProductResponse schema."""
+    payload = {
+        "name": "Schema Validation Product",
+        "manufacturer_address": "0x1234567890123456789012345678901234567890",
+    }
+    response = client_fixture.post("/products", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    validated = ProductResponse.model_validate(data)
+    assert validated.name == payload["name"]
+    assert validated.registered_at is not None
+    assert "created_at" not in data
 
 
 def test_put_product_updates_existing_product(client_fixture, seeded_products):
@@ -66,6 +82,22 @@ def test_put_product_updates_existing_product(client_fixture, seeded_products):
     assert data["name"] == "Updated Product Name"
     assert data["description"] == "Updated description"
     assert data["manufacturer_address"] == "0x1234567890123456789012345678901234567890"
+
+
+def test_put_product_response_validates_against_schema(client_fixture, seeded_products):
+    """Regression test: PUT /products/{id} response must conform to ProductResponse schema."""
+    update_payload = {
+        "name": "Updated Product Name",
+        "description": "Updated description",
+    }
+    response = client_fixture.put("/products/0x" + "a" * 64, json=update_payload)
+    assert response.status_code == 200
+    data = response.json()
+    validated = ProductResponse.model_validate(data)
+    assert validated.name == update_payload["name"]
+    assert validated.description == update_payload["description"]
+    assert validated.registered_at is not None
+    assert "created_at" not in data
 
 
 def test_put_product_returns_404_for_nonexistent_product(client_fixture, seeded_products):
