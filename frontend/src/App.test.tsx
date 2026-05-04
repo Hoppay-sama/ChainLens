@@ -2,6 +2,9 @@ import { describe, it, expect, vi } from 'vitest'
 import type { ReactNode } from 'react'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
+import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom/vitest'
+import App from './App'
 
 // ─── Mock heavy providers so tests stay fast and deterministic ───
 vi.mock('@rainbow-me/rainbowkit', () => ({
@@ -36,9 +39,12 @@ vi.mock('./components/EtherealBackground', () => ({
   default: () => null,
 }))
 
-vi.mock('./components/Layout', () => ({
-  default: ({ children }: { children: ReactNode }) => <>{children}</>,
-}))
+vi.mock('./components/Layout', async () => {
+  const { Outlet } = await vi.importActual('react-router-dom')
+  return {
+    default: () => <Outlet />,
+  }
+})
 
 vi.mock('./components/ui/LoadingSpinner', () => ({
   default: ({ size }: { size: string }) => <div data-testid={`spinner-${size}`}>Loading</div>,
@@ -46,7 +52,7 @@ vi.mock('./components/ui/LoadingSpinner', () => ({
 
 // Mock page components so the test isolates route-level code-splitting logic
 vi.mock('./pages/Dashboard', () => ({
-  default: () => <div data-testid="dashboard-page">Dashboard</div>,
+  default: () => <div data-testid="dashboard-page">Track Beyond The Ordinary</div>,
 }))
 
 vi.mock('./pages/Products', () => ({
@@ -68,21 +74,22 @@ vi.mock('./pages/Verify', () => ({
 // ─── Tests ───
 
 describe('App', () => {
-  describe('route-level code splitting (regression: FCP 11.46s)', () => {
-    it('uses React.lazy for all five page components', () => {
+  describe('route-level code splitting (regression: LCP 10.84s)', () => {
+    it('eagerly imports Dashboard for the initial route', () => {
       const appPath = resolve(import.meta.dirname, './App.tsx')
       const source = readFileSync(appPath, 'utf-8')
 
-      // Reject eager imports from ./pages/ — this was the original bug
-      const eagerPageImports = source.match(
-        /^import\s+\w+\s+from\s+['"]\.\/pages\//gm
-      )
-      expect(eagerPageImports).toBeNull()
-
-      // Assert each route is wrapped in lazy()
+      // The initial route must NOT be lazy-loaded so LCP isn't blocked by a
+      // network waterfall (main bundle → React → Dashboard chunk → vendor chunk).
       expect(source).toContain(
-        `const Dashboard = lazy(() => import('./pages/Dashboard'))`
+        `import Dashboard from './pages/Dashboard'`
       )
+    })
+
+    it('lazy-loads all non-initial routes', () => {
+      const appPath = resolve(import.meta.dirname, './App.tsx')
+      const source = readFileSync(appPath, 'utf-8')
+
       expect(source).toContain(
         `const Products = lazy(() => import('./pages/Products'))`
       )
@@ -95,6 +102,19 @@ describe('App', () => {
       expect(source).toContain(
         `const Verify = lazy(() => import('./pages/Verify'))`
       )
+    })
+
+    it('renders Dashboard content immediately on the root route without showing a Suspense fallback', () => {
+      const { container } = render(<App />)
+
+      // Hero text from the Dashboard page should be present synchronously
+      expect(screen.getByTestId('dashboard-page')).toBeInTheDocument()
+      expect(screen.getByText(/Track Beyond The Ordinary/i)).toBeInTheDocument()
+
+      // Layout's Suspense fallback (spinner) must NOT appear for the eager route
+      expect(
+        container.querySelector('[data-testid^="spinner-"]')
+      ).not.toBeInTheDocument()
     })
 
     it('wraps routes in Suspense with a fallback UI', () => {

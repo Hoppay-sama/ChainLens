@@ -1,4 +1,4 @@
-import { lazy } from 'react'
+import { lazy, useMemo } from 'react'
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { WagmiProvider } from 'wagmi'
@@ -9,8 +9,8 @@ import { SpeedInsights } from '@vercel/speed-insights/react'
 import { rainbowKitConfig } from './config/wagmi'
 import EtherealBackground from './components/EtherealBackground'
 import Layout from './components/Layout'
+import Dashboard from './pages/Dashboard'
 
-const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Products = lazy(() => import('./pages/Products'))
 const Shipments = lazy(() => import('./pages/Shipments'))
 const AnalyticsPage = lazy(() => import('./pages/Analytics'))
@@ -26,17 +26,21 @@ const queryClient = new QueryClient({
 })
 
 function App() {
+  const rainbowTheme = useMemo(
+    () =>
+      darkTheme({
+        accentColor: '#c8f060',
+        accentColorForeground: '#0d0d0d',
+        borderRadius: 'medium',
+        fontStack: 'system',
+      }),
+    []
+  )
+
   return (
     <WagmiProvider config={rainbowKitConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          theme={darkTheme({
-            accentColor: '#c8f060',
-            accentColorForeground: '#0d0d0d',
-            borderRadius: 'medium',
-            fontStack: 'system',
-          })}
-        >
+        <RainbowKitProvider theme={rainbowTheme}>
           <BrowserRouter>
             <EtherealBackground />
             <Analytics />
