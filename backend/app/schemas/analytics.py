@@ -30,3 +30,18 @@ class ExportRequest(BaseModel):
     end_date: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class DailyVolumeItem(BaseModel):
+    name: str  # day name like "Mon", "Tue"
+    date: str  # ISO date like "2024-01-15"
+    shipments: int
+    products: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DailyVolumeResponse(BaseModel):
+    items: List[DailyVolumeItem]
+
+    model_config = ConfigDict(from_attributes=True)

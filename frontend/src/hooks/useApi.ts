@@ -73,6 +73,13 @@ export function useBottlenecks(minDwellHours?: number) {
   })
 }
 
+export function useDailyVolume() {
+  return useQuery({
+    queryKey: ['daily-volume'],
+    queryFn: () => fetchApi('/analytics/daily-volume'),
+  })
+}
+
 export function useVerifyProduct(id: string) {
   return useQuery({
     queryKey: ['verify', id],
@@ -103,21 +110,32 @@ interface PaginatedResponse<T> {
   total: number
 }
 
-export function useProductsPaginated(page = 1, limit = 10) {
+export function useProductsPaginated(page = 1, limit = 10, search?: string, sortBy?: string, sortOrder?: 'asc' | 'desc') {
   const skip = (page - 1) * limit
+  const params = new URLSearchParams()
+  params.set('skip', String(skip))
+  params.set('limit', String(limit))
+  if (search) params.set('search', search)
+  if (sortBy) params.set('sort_by', sortBy)
+  if (sortOrder) params.set('sort_order', sortOrder)
   return useQuery<PaginatedResponse<Product>>({
-    queryKey: ['products', 'paginated', page, limit],
-    queryFn: () => fetchApi(`/products?skip=${skip}&limit=${limit}`),
+    queryKey: ['products', 'paginated', page, limit, search, sortBy, sortOrder],
+    queryFn: () => fetchApi(`/products?${params.toString()}`),
   })
 }
 
-export function useShipments(page = 1, limit = 10, status?: string) {
+export function useShipments(page = 1, limit = 10, status?: string, search?: string, sortBy?: string, sortOrder?: 'asc' | 'desc') {
   const skip = (page - 1) * limit
-  let endpoint = `/shipments?skip=${skip}&limit=${limit}`
-  if (status && status !== 'all') endpoint += `&status=${status}`
+  const params = new URLSearchParams()
+  params.set('skip', String(skip))
+  params.set('limit', String(limit))
+  if (status && status !== 'all') params.set('status', status)
+  if (search) params.set('search', search)
+  if (sortBy) params.set('sort_by', sortBy)
+  if (sortOrder) params.set('sort_order', sortOrder)
   return useQuery<PaginatedResponse<Shipment>>({
-    queryKey: ['shipments', page, limit, status],
-    queryFn: () => fetchApi(endpoint),
+    queryKey: ['shipments', page, limit, status, search, sortBy, sortOrder],
+    queryFn: () => fetchApi(`/shipments?${params.toString()}`),
   })
 }
 

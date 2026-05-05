@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { screen, fireEvent } from '@testing-library/react'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
 import Products from './Products'
 import {
   useProductsPaginated,
@@ -29,11 +29,20 @@ describe('Products', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    vi.mocked(useProductsPaginated).mockReturnValue({
-      data: { items: mockProducts, total: 25 },
-      isLoading: false,
-      error: null,
-    } as any)
+    vi.mocked(useProductsPaginated).mockImplementation((...args: any[]) => {
+      const search = args[2]
+      let items = mockProducts
+      if (search) {
+        items = mockProducts.filter((p) =>
+          p.name.toLowerCase().includes(search.toLowerCase())
+        )
+      }
+      return {
+        data: { items, total: 25 },
+        isLoading: false,
+        error: null,
+      } as any
+    })
 
     vi.mocked(useProduct).mockReturnValue({
       data: null,
@@ -88,22 +97,26 @@ describe('Products', () => {
     expect(screen.getByTestId('icon-ChevronRight').closest('button')).toBeInTheDocument()
   })
 
-  it('filters products by name', () => {
+  it('filters products by name', async () => {
     renderWithProviders(<Products />)
 
-    const searchInput = screen.getByPlaceholderText('Filter by product name...')
+    const searchInput = screen.getByPlaceholderText('Search by product name...')
     fireEvent.change(searchInput, { target: { value: 'Widget' } })
 
-    expect(screen.getByText('Widget A')).toBeInTheDocument()
-    expect(screen.queryByText('Gadget B')).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Widget A')).toBeInTheDocument()
+      expect(screen.queryByText('Gadget B')).not.toBeInTheDocument()
+    })
   })
 
-  it('renders empty state when no products match search', () => {
+  it('renders empty state when no products match search', async () => {
     renderWithProviders(<Products />)
 
-    const searchInput = screen.getByPlaceholderText('Filter by product name...')
+    const searchInput = screen.getByPlaceholderText('Search by product name...')
     fireEvent.change(searchInput, { target: { value: 'NonExistent' } })
 
-    expect(screen.getByText('No products match your search')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('No products match your search')).toBeInTheDocument()
+    })
   })
 })

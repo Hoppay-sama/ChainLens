@@ -15,6 +15,7 @@ from app.schemas.shipment import (
     ShipmentResponse,
     ShipmentUpdate,
 )
+from app.services.events import broadcaster
 
 router = APIRouter()
 
@@ -36,7 +37,7 @@ def get_all_shipments(
 
 
 @router.post("/", response_model=ShipmentResponse)
-def create_shipment(
+async def create_shipment(
     shipment_in: ShipmentCreate,
     db: Session = Depends(get_db),
 ):
@@ -60,6 +61,10 @@ def create_shipment(
         db.rollback()
         raise HTTPException(status_code=409, detail="Shipment ID conflict, please retry")
     db.refresh(shipment)
+    await broadcaster.broadcast(
+        "shipment_created",
+        {"shipment_id": shipment.shipment_id, "product_id": shipment.product_id},
+    )
     return shipment
 
 

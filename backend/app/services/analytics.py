@@ -2,11 +2,11 @@ import pandas as pd
 import numpy as np
 from typing import Optional, List, Dict
 from sqlalchemy.orm import Session
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from app.models.product import Product
-from app.models.shipment import Checkpoint, CustodyTransfer
-from app.schemas.analytics import AnomalyResponse
+from app.models.shipment import Checkpoint, CustodyTransfer, Shipment
+from app.schemas.analytics import AnomalyResponse, DailyVolumeItem
 
 
 def _get_checkpoint_data(db: Session) -> pd.DataFrame:
@@ -181,3 +181,39 @@ def get_kpi_summary(db: Session) -> Dict:
         "avg_checkpoints_per_shipment": avg_checkpoints,
         "bottleneck_locations": bottlenecks,
     }
+
+
+def get_daily_volume_data(db: Session) -> List[DailyVolumeItem]:
+    """Query daily product registrations and shipment creations for the last 7 days."""
+    today = datetime.utcnow().date()
+    dates = [today - timedelta(days=i) for i in range(6, -1, -1)]
+    start_dt = datetime.combine(dates[0], datetime.min.time())
+
+    products = db.query(Product).filter(Product.registered_at >= start_dt).all()
+    shipments = db.query(Shipment).filter(Shipment.created_at >= start_dt).all()
+
+    product_counts: dict[str, int] = {d.isoformat(): 0 for d in dates}
+    shipment_counts: dict[str, int] = {d.isoformat(): 0 for d in dates}
+
+    for p in products:
+        if p.registered_at is not None:
+            d = p.registered_at.date().isoformat()
+            product_counts[d] = product_counts.get(d, 0) + 1
+
+    for s in shipments:
+        if s.created_at is not None:
+            d = s.created_at.date().isoformat()
+            shipment_counts[d] = shipment_counts.get(d, 0) + 1
+
+    items: List[DailyVolumeItem] = []
+    for d in dates:
+        date_str = d.isoformat()
+        items.append(
+            DailyVolumeItem(
+                name=d.strftime("%a"),
+                date=date_str,
+                shipments=shipment_counts.get(date_str, 0),
+                products=product_counts.get(date_str, 0),
+            )
+        )
+    return items
