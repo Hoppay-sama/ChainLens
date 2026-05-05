@@ -46,15 +46,35 @@ describe('Lighthouse CI config', () => {
     expect(flags).toContain('--disable-setuid-sandbox')
     expect(flags).toContain('--disable-dev-shm-usage')
     expect(flags).toContain('--disable-features=IsolateOrigins,site-per-process')
+    expect(flags).toContain('--disable-background-timer-throttling')
+    expect(flags).toContain('--disable-renderer-backgrounding')
     expect(flags).toContain('--window-size=1920,1080')
   })
 
-  it('has maxWaitForFCP to allow slow CI runners to render (regression: NO_FCP)', () => {
+  it('uses desktop preset to avoid aggressive mobile throttling on CI (regression: NO_FCP)', () => {
     const require = createRequire(import.meta.url)
     const config = require(configPath)
-    const maxWait = config.ci.collect.settings?.maxWaitForFCP
+    const preset = config.ci.collect.settings?.preset
+
+    expect(preset).toBeDefined()
+    expect(preset).toBe('desktop')
+  })
+
+  it('has maxWaitForFcp to allow slow CI runners to render (regression: NO_FCP)', () => {
+    const require = createRequire(import.meta.url)
+    const config = require(configPath)
+    const maxWait = config.ci.collect.settings?.maxWaitForFcp
 
     expect(maxWait).toBeDefined()
-    expect(maxWait).toBe(60000)
+    expect(maxWait).toBe(120000)
+  })
+
+  it('has maxWaitForLoad to prevent timeout on heavy JS bundles (regression: NO_FCP)', () => {
+    const require = createRequire(import.meta.url)
+    const config = require(configPath)
+    const maxWait = config.ci.collect.settings?.maxWaitForLoad
+
+    expect(maxWait).toBeDefined()
+    expect(maxWait).toBe(120000)
   })
 })

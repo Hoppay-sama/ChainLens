@@ -9,8 +9,10 @@ module.exports = {
         // --disable-features=IsolateOrigins,site-per-process required on
         // GitHub Actions ubuntu-latest (24.04) where AppArmor restricts
         // unprivileged user namespaces needed by Chrome's sandbox.
-        chromeFlags: '--no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu --disable-features=IsolateOrigins,site-per-process --window-size=1920,1080',
-        maxWaitForFCP: 60000,
+        chromeFlags: '--no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu --disable-features=IsolateOrigins,site-per-process --disable-background-timer-throttling --disable-renderer-backgrounding --window-size=1920,1080',
+        preset: 'desktop',
+        maxWaitForFcp: 120000,
+        maxWaitForLoad: 120000,
       },
     },
     assert: {
