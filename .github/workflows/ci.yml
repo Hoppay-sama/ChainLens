@@ -142,6 +142,19 @@ jobs:
         with:
           chrome-version: stable
 
+      - name: Disable AppArmor restrictions for Chrome sandbox
+        # TODO: Remove after verifying Ubuntu 24.04 + Chrome stable works
+        # without this. The lighthouserc chromeFlags string fix may be
+        # sufficient on its own.
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Verify Chrome starts with --no-sandbox
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: |
+          echo "Chrome path: $CHROME_PATH"
+          $CHROME_PATH --no-sandbox --version
+
       - name: Run Lighthouse CI
         env:
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}

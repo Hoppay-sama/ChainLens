@@ -4,15 +4,13 @@ module.exports = {
       url: ['http://localhost:4173/'],
       startServerCommand: 'npx vite preview --port 4173 --host',
       startServerReadyPattern: 'Local:',
-      startServerReadyTimeout: 30000,
+      startServerReadyTimeout: 60000,
       numberOfRuns: 3,
       settings: {
-        chromeFlags: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-        ],
+        // --disable-features=IsolateOrigins,site-per-process required on
+        // GitHub Actions ubuntu-latest (24.04) where AppArmor restricts
+        // unprivileged user namespaces needed by Chrome's sandbox.
+        chromeFlags: '--no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu --disable-features=IsolateOrigins,site-per-process',
       },
     },
     assert: {
