@@ -82,6 +82,7 @@ jobs:
         working-directory: frontend
     env:
       CI: true
+      VITE_WALLETCONNECT_PROJECT_ID: ${{ secrets.VITE_WALLETCONNECT_PROJECT_ID || 'ci-test-project-id' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -113,6 +114,8 @@ jobs:
     defaults:
       run:
         working-directory: frontend
+    env:
+      VITE_WALLETCONNECT_PROJECT_ID: ${{ secrets.VITE_WALLETCONNECT_PROJECT_ID || 'ci-test-project-id' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
