@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from app.core.auth import (
-    build_siwe_message,
     create_access_token,
     extract_address_from_siwe,
     extract_nonce_from_siwe,
@@ -14,12 +14,18 @@ from app.schemas.auth import NonceResponse, VerifyRequest, VerifyResponse
 router = APIRouter()
 
 
-@router.post("/nonce", response_model=NonceResponse)
+@router.get("/nonce", response_model=NonceResponse)
 @limiter.limit("5/minute")
 def get_nonce(request: Request):
     """Generate a random nonce for SIWE authentication."""
     nonce = nonce_store.create()
-    return {"nonce": nonce}
+    return JSONResponse(
+        content={"nonce": nonce},
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, private",
+            "Pragma": "no-cache",
+        },
+    )
 
 
 @router.post("/verify", response_model=VerifyResponse)

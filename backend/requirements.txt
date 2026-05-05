@@ -17,3 +17,5 @@ qrcode[pil]>=7.4.2
 reportlab>=4.2.0
 faker>=25.0.0
 slowapi>=0.1.9
+python-jose[cryptography]>=3.3.0
+eth-account>=0.13.0

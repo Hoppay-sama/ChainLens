@@ -40,6 +40,7 @@ describe('Content-Security-Policy', () => {
     expect(directives['connect-src']).toContain('wss://*.walletconnect.org')
     expect(directives['connect-src']).toContain('https://*.infura.io')
     expect(directives['connect-src']).toContain('https://*.web3modal.org')
+    expect(directives['connect-src']).toContain('https://*.rpc.thirdweb.com')
     expect(directives['connect-src']).toContain('https://api.vercel.com')
 
     // Assert — script-src (must never contain wildcard)

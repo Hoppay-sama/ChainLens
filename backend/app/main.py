@@ -16,7 +16,7 @@ from app.core.config import settings
 from app.core.database import engine, Base
 from app.core.limiter import limiter
 from app.core.security import SecurityHeadersMiddleware
-from app.api.routes import products, shipments, analytics
+from app.api.routes import auth, products, shipments, analytics
 
 logger = logging.getLogger("veritras.api")
 
@@ -88,6 +88,7 @@ async def log_requests(request: Request, call_next):
     return response
 
 
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(products.router, prefix="/products", tags=["products"])
 app.include_router(shipments.router, prefix="/shipments", tags=["shipments"])
 app.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
