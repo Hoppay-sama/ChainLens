@@ -1,10 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { Product, Shipment } from '@/types'
+import { getAuthToken, clearAuthToken } from './useAuth'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-async function fetchApi(endpoint: string) {
-  const response = await fetch(`${API_URL}${endpoint}`)
+async function fetchApi(endpoint: string, options?: RequestInit) {
+  const token = getAuthToken()
+  const headers: Record<string, string> = {
+    ...(options?.headers as Record<string, string> || {}),
+  }
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers,
+  })
+
+  if (response.status === 401) {
+    clearAuthToken()
+  }
+
   if (!response.ok) {
     const errorText = await response.text().catch(() => response.statusText)
     throw new Error(`API Error (${response.status}): ${errorText || response.statusText}`)
@@ -73,6 +91,13 @@ export function useBottlenecks(minDwellHours?: number) {
   })
 }
 
+export function useDailyVolume() {
+  return useQuery({
+    queryKey: ['daily-volume'],
+    queryFn: () => fetchApi('/analytics/daily-volume'),
+  })
+}
+
 export function useVerifyProduct(id: string) {
   return useQuery({
     queryKey: ['verify', id],
@@ -85,7 +110,12 @@ export async function exportAnalytics(format: 'csv' | 'pdf', startDate?: string,
   const params = new URLSearchParams({ format })
   if (startDate) params.append('start_date', startDate)
   if (endDate) params.append('end_date', endDate)
-  const response = await fetch(`${API_URL}/analytics/export?${params}`)
+  const response = await fetch(`${API_URL}/analytics/export?${params}`, {
+    headers: getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {},
+  })
+  if (response.status === 401) {
+    clearAuthToken()
+  }
   if (!response.ok) throw new Error('Export failed')
   const blob = await response.blob()
   const url = window.URL.createObjectURL(blob)
@@ -103,21 +133,32 @@ interface PaginatedResponse<T> {
   total: number
 }
 
-export function useProductsPaginated(page = 1, limit = 10) {
+export function useProductsPaginated(page = 1, limit = 10, search?: string, sortBy?: string, sortOrder?: 'asc' | 'desc') {
   const skip = (page - 1) * limit
+  const params = new URLSearchParams()
+  params.set('skip', String(skip))
+  params.set('limit', String(limit))
+  if (search) params.set('search', search)
+  if (sortBy) params.set('sort_by', sortBy)
+  if (sortOrder) params.set('sort_order', sortOrder)
   return useQuery<PaginatedResponse<Product>>({
-    queryKey: ['products', 'paginated', page, limit],
-    queryFn: () => fetchApi(`/products?skip=${skip}&limit=${limit}`),
+    queryKey: ['products', 'paginated', page, limit, search, sortBy, sortOrder],
+    queryFn: () => fetchApi(`/products?${params.toString()}`),
   })
 }
 
-export function useShipments(page = 1, limit = 10, status?: string) {
+export function useShipments(page = 1, limit = 10, status?: string, search?: string, sortBy?: string, sortOrder?: 'asc' | 'desc') {
   const skip = (page - 1) * limit
-  let endpoint = `/shipments?skip=${skip}&limit=${limit}`
-  if (status && status !== 'all') endpoint += `&status=${status}`
+  const params = new URLSearchParams()
+  params.set('skip', String(skip))
+  params.set('limit', String(limit))
+  if (status && status !== 'all') params.set('status', status)
+  if (search) params.set('search', search)
+  if (sortBy) params.set('sort_by', sortBy)
+  if (sortOrder) params.set('sort_order', sortOrder)
   return useQuery<PaginatedResponse<Shipment>>({
-    queryKey: ['shipments', page, limit, status],
-    queryFn: () => fetchApi(endpoint),
+    queryKey: ['shipments', page, limit, status, search, sortBy, sortOrder],
+    queryFn: () => fetchApi(`/shipments?${params.toString()}`),
   })
 }
 
@@ -140,16 +181,11 @@ export function useCreateProduct() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (data: ProductMutationInput) => {
-      const response = await fetch(`${API_URL}/products`, {
+      return fetchApi('/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      if (!response.ok) {
-        const err = await response.text().catch(() => 'Failed to create product')
-        throw new Error(err)
-      }
-      return response.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
@@ -161,16 +197,11 @@ export function useUpdateProduct() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ product_id, data }: { product_id: string; data: ProductMutationInput }) => {
-      const response = await fetch(`${API_URL}/products/${product_id}`, {
+      return fetchApi(`/products/${product_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      if (!response.ok) {
-        const err = await response.text().catch(() => 'Failed to update product')
-        throw new Error(err)
-      }
-      return response.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
@@ -182,16 +213,11 @@ export function useCreateShipment() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (data: ShipmentMutationInput) => {
-      const response = await fetch(`${API_URL}/shipments`, {
+      return fetchApi('/shipments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      if (!response.ok) {
-        const err = await response.text().catch(() => 'Failed to create shipment')
-        throw new Error(err)
-      }
-      return response.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shipments'] })
@@ -203,16 +229,11 @@ export function useUpdateShipment() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ shipment_id, data }: { shipment_id: string; data: Omit<ShipmentMutationInput, 'product_id'> }) => {
-      const response = await fetch(`${API_URL}/shipments/${shipment_id}`, {
+      return fetchApi(`/shipments/${shipment_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      if (!response.ok) {
-        const err = await response.text().catch(() => 'Failed to update shipment')
-        throw new Error(err)
-      }
-      return response.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shipments'] })

@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PremiumHero from '@/components/PremiumHero'
-import { useKPIData, useProducts } from '@/hooks/useApi'
+import { useKPIData, useProducts, useDailyVolume } from '@/hooks/useApi'
+import { useAnalyticsEvents } from '@/hooks/useSSE'
 import { formatDate } from '@/utils/formatters'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Package,
   Truck,
@@ -25,14 +27,14 @@ import {
 } from 'recharts'
 import type { Product } from '@/types'
 
-const chartData = [
-  { name: 'Mon', shipments: 420, products: 240 },
-  { name: 'Tue', shipments: 380, products: 300 },
-  { name: 'Wed', shipments: 510, products: 280 },
-  { name: 'Thu', shipments: 460, products: 320 },
-  { name: 'Fri', shipments: 540, products: 350 },
-  { name: 'Sat', shipments: 320, products: 210 },
-  { name: 'Sun', shipments: 290, products: 190 },
+const defaultChartData = [
+  { name: 'Mon', shipments: 0, products: 0 },
+  { name: 'Tue', shipments: 0, products: 0 },
+  { name: 'Wed', shipments: 0, products: 0 },
+  { name: 'Thu', shipments: 0, products: 0 },
+  { name: 'Fri', shipments: 0, products: 0 },
+  { name: 'Sat', shipments: 0, products: 0 },
+  { name: 'Sun', shipments: 0, products: 0 },
 ]
 
 const containerVariants = {
@@ -56,6 +58,21 @@ export default function Dashboard() {
   const [hoveredKpi, setHoveredKpi] = useState<number | null>(null)
   const { data: kpiData, isLoading: kpiLoading, error: kpiError } = useKPIData()
   const { data: productsData, isLoading: productsLoading } = useProducts()
+  const { data: volumeData, isLoading: volumeLoading } = useDailyVolume()
+  const queryClient = useQueryClient()
+
+  useAnalyticsEvents((_type) => {
+    queryClient.invalidateQueries({ queryKey: ['kpis'] })
+    queryClient.invalidateQueries({ queryKey: ['products'] })
+    queryClient.invalidateQueries({ queryKey: ['daily-volume'] })
+  })
+
+  const chartData = useMemo(() => {
+    if (volumeData?.items && volumeData.items.length > 0) {
+      return volumeData.items
+    }
+    return defaultChartData
+  }, [volumeData])
 
   const isLoading = kpiLoading || productsLoading
   const error = kpiError
@@ -265,36 +282,42 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData}>
-                        <defs>
-                          <linearGradient id="shipments" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#c8f060" stopOpacity={0.15} />
-                            <stop offset="95%" stopColor="#c8f060" stopOpacity={0} />
-                          </linearGradient>
-                          <linearGradient id="products" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#60d0f0" stopOpacity={0.15} />
-                            <stop offset="95%" stopColor="#60d0f0" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
-                        <XAxis dataKey="name" stroke="#ffffff15" fontSize={11} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#ffffff15" fontSize={11} tickLine={false} axisLine={false} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#0a0a0a',
-                            border: '1px solid #ffffff10',
-                            borderRadius: '16px',
-                            fontSize: '12px',
-                            backdropFilter: 'blur(20px)',
-                            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-                          }}
-                          itemStyle={{ color: '#f0ece4' }}
-                        />
-                        <Area type="monotone" dataKey="shipments" stroke="#c8f060" strokeWidth={2} fill="url(#shipments)" />
-                        <Area type="monotone" dataKey="products" stroke="#60d0f0" strokeWidth={2} fill="url(#products)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                    {volumeLoading ? (
+                      <div className="flex h-full items-center justify-center">
+                        <LoadingSpinner size="sm" />
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData}>
+                          <defs>
+                            <linearGradient id="shipments" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#c8f060" stopOpacity={0.15} />
+                              <stop offset="95%" stopColor="#c8f060" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="products" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#60d0f0" stopOpacity={0.15} />
+                              <stop offset="95%" stopColor="#60d0f0" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
+                          <XAxis dataKey="name" stroke="#ffffff15" fontSize={11} tickLine={false} axisLine={false} />
+                          <YAxis stroke="#ffffff15" fontSize={11} tickLine={false} axisLine={false} />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#0a0a0a',
+                              border: '1px solid #ffffff10',
+                              borderRadius: '16px',
+                              fontSize: '12px',
+                              backdropFilter: 'blur(20px)',
+                              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                            }}
+                            itemStyle={{ color: '#f0ece4' }}
+                          />
+                          <Area type="monotone" dataKey="shipments" stroke="#c8f060" strokeWidth={2} fill="url(#shipments)" />
+                          <Area type="monotone" dataKey="products" stroke="#60d0f0" strokeWidth={2} fill="url(#products)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    )}
                   </div>
                 </div>
               </motion.div>

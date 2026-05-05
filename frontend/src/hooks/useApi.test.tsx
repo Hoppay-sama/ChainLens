@@ -78,7 +78,8 @@ describe('useApi hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/products/PROD-001')
+        expect.stringContaining('/products/PROD-001'),
+        expect.objectContaining({ headers: expect.any(Object) })
       )
       expect(result.current.data).toEqual({ id: 1, name: 'Widget' })
     })
@@ -127,7 +128,7 @@ describe('useApi hooks', () => {
 
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ id: 1, product_id: 'PROD-001' }),
+        text: () => Promise.resolve(JSON.stringify({ id: 1, product_id: 'PROD-001' })),
       } as Response)
 
       const { result } = renderHook(() => useCreateProduct(), {

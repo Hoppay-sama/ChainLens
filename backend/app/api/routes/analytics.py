@@ -1,3 +1,6 @@
+import asyncio
+import json
+
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -5,9 +8,10 @@ from typing import Literal, Optional, List
 
 from app.core.database import get_db
 from app.core.limiter import limiter
-from app.services.analytics import get_kpi_summary, detect_anomalies, get_bottleneck_locations
+from app.services.analytics import get_kpi_summary, detect_anomalies, get_bottleneck_locations, get_daily_volume_data
+from app.services.events import broadcaster
 from app.services.export import export_to_csv, export_to_pdf
-from app.schemas.analytics import KPIResponse, AnomalyResponse
+from app.schemas.analytics import KPIResponse, AnomalyResponse, DailyVolumeResponse
 
 router = APIRouter()
 
@@ -65,3 +69,35 @@ def export_analytics(
             media_type="application/pdf",
             headers={"Content-Disposition": "attachment; filename=veritras_export.pdf"},
         )
+
+
+@router.get("/daily-volume", response_model=DailyVolumeResponse)
+@limiter.limit("10/minute")
+def get_daily_volume(request: Request, db: Session = Depends(get_db)):
+    """Return daily shipment and product registration counts for the last 7 days."""
+    items = get_daily_volume_data(db)
+    return {"items": items}
+
+
+@router.get("/events")
+async def analytics_events():
+    """Server-Sent Events stream for real-time analytics updates."""
+    queue = broadcaster.subscribe()
+
+    async def event_generator():
+        try:
+            while True:
+                message = await queue.get()
+                yield message
+        finally:
+            broadcaster.unsubscribe(queue)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )

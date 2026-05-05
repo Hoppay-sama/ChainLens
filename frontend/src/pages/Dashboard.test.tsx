@@ -1,12 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { screen } from '@testing-library/react'
 import Dashboard from './Dashboard'
-import { useKPIData, useProducts } from '@/hooks/useApi'
+import { useKPIData, useProducts, useDailyVolume } from '@/hooks/useApi'
 import { renderWithProviders } from '@/test/test-utils'
 
 vi.mock('@/hooks/useApi', () => ({
   useKPIData: vi.fn(),
   useProducts: vi.fn(),
+  useDailyVolume: vi.fn(),
+}))
+
+vi.mock('@/hooks/useSSE', () => ({
+  useAnalyticsEvents: vi.fn(),
 }))
 
 describe('Dashboard', () => {
@@ -20,6 +25,12 @@ describe('Dashboard', () => {
 
     vi.mocked(useProducts).mockReturnValue({
       data: [],
+      isLoading: false,
+      error: null,
+    } as any)
+
+    vi.mocked(useDailyVolume).mockReturnValue({
+      data: null,
       isLoading: false,
       error: null,
     } as any)

@@ -51,12 +51,15 @@ describe('Shipments', () => {
   it('renders status filter dropdown', () => {
     renderWithProviders(<Shipments />)
 
-    const select = screen.getByRole('combobox')
-    expect(select).toBeInTheDocument()
+    const selects = screen.getAllByRole('combobox')
+    expect(selects.length).toBeGreaterThanOrEqual(1)
 
-    fireEvent.change(select, { target: { value: '1' } })
+    const statusSelect = selects[0]
+    expect(statusSelect).toBeInTheDocument()
 
-    expect(vi.mocked(useShipments)).toHaveBeenCalledWith(1, 10, '1')
+    fireEvent.change(statusSelect, { target: { value: '1' } })
+
+    expect(vi.mocked(useShipments)).toHaveBeenCalledWith(1, 10, '1', undefined)
   })
 
   it('renders pagination controls', () => {

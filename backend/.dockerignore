@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+__pycache__
+.env
+.env.local
+venv
+.pytest_cache
+*.pyc
+.mypy_cache
+chainlens.db

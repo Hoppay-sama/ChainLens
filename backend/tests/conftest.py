@@ -8,6 +8,8 @@ from sqlalchemy.pool import StaticPool
 
 # Force SQLite for tests so app.core.database never tries to import psycopg2.
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+# Prevent live RPC connections during tests.
+os.environ["SEPOLIA_RPC_URL"] = ""
 
 from app.core.database import Base, get_db
 from app.main import app

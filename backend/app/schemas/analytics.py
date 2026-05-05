@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 
 
@@ -15,18 +15,33 @@ class KPIResponse(BaseModel):
 
 
 class AnomalyResponse(BaseModel):
-    product_id: str
+    product_id: str = Field(..., max_length=100)
     transit_time_hours: float
     z_score: float
-    severity: str
-    flagged_at: str
+    severity: str = Field(..., max_length=50)
+    flagged_at: str = Field(..., max_length=50)
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class ExportRequest(BaseModel):
-    format: str
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
+    format: str = Field(..., max_length=10)
+    start_date: Optional[str] = Field(default=None, max_length=50)
+    end_date: Optional[str] = Field(default=None, max_length=50)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DailyVolumeItem(BaseModel):
+    name: str = Field(..., max_length=50)  # day name like "Mon", "Tue"
+    date: str = Field(..., max_length=50)  # ISO date like "2024-01-15"
+    shipments: int
+    products: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DailyVolumeResponse(BaseModel):
+    items: List[DailyVolumeItem]
 
     model_config = ConfigDict(from_attributes=True)

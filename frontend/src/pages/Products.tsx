@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
@@ -29,6 +29,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  ArrowUpDown,
 } from 'lucide-react'
 import { formatAddress, formatDate } from '@/utils/formatters'
 import type { Product, Checkpoint, CustodyTransfer } from '@/types'
@@ -51,15 +52,24 @@ const DEFAULT_LIMIT = 10
 
 export default function Products() {
   const [page, setPage] = useState(1)
-  const [nameSearch, setNameSearch] = useState('')
+  const [limit, setLimit] = useState(DEFAULT_LIMIT)
+  const [serverSearch, setServerSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [sortBy, setSortBy] = useState<'product_id' | 'name' | null>(null)
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(serverSearch), 300)
+    return () => clearTimeout(timer)
+  }, [serverSearch])
 
   const {
     data: paginatedData,
     isLoading: tableLoading,
     error: tableError,
-  } = useProductsPaginated(page, DEFAULT_LIMIT)
+  } = useProductsPaginated(page, limit, debouncedSearch || undefined, sortBy ?? undefined, sortOrder)
 
   const createProduct = useCreateProduct()
   const updateProduct = useUpdateProduct()
@@ -71,16 +81,20 @@ export default function Products() {
     ? paginatedData.length
     : paginatedData?.total ?? 0
 
-  const filteredItems = useMemo(() => {
-    const term = nameSearch.trim().toLowerCase()
-    if (!term) return rawItems
-    return rawItems.filter((p) => p.name.toLowerCase().includes(term))
-  }, [rawItems, nameSearch])
-
-  const totalPages = Math.max(1, Math.ceil(totalRaw / DEFAULT_LIMIT))
+  const totalPages = Math.max(1, Math.ceil(totalRaw / limit))
 
   const handleSearchChange = (value: string) => {
-    setNameSearch(value)
+    setServerSearch(value)
+    setPage(1)
+  }
+
+  const handleSort = (column: 'product_id' | 'name') => {
+    if (sortBy === column) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortBy(column)
+      setSortOrder('asc')
+    }
     setPage(1)
   }
 
@@ -207,11 +221,26 @@ export default function Products() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted/40" />
             <input
               type="text"
-              placeholder="Filter by product name..."
-              value={nameSearch}
+              placeholder="Search by product name..."
+              value={serverSearch}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 pl-10 pr-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted">Show</span>
+            <select
+              value={limit}
+              onChange={(e) => {
+                setLimit(Number(e.target.value))
+                setPage(1)
+              }}
+              className="rounded-xl border border-white/[0.06] bg-bg py-2.5 pl-3 pr-8 text-sm text-text outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
           </div>
         </div>
       </div>
@@ -235,11 +264,11 @@ export default function Products() {
           <div className="flex items-center justify-center py-16">
             <LoadingSpinner size="lg" />
           </div>
-        ) : filteredItems.length === 0 ? (
+        ) : rawItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Package className="h-12 w-12 text-muted/20" />
             <p className="mt-4 text-sm text-muted">
-              {nameSearch ? 'No products match your search' : 'No products registered yet'}
+              {serverSearch ? 'No products match your search' : 'No products registered yet'}
             </p>
           </div>
         ) : (
@@ -247,15 +276,31 @@ export default function Products() {
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-white/[0.06]">
-                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Product ID</th>
-                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Name</th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">
+                    <button
+                      onClick={() => handleSort('product_id')}
+                      className="flex items-center gap-1 transition-colors hover:text-text"
+                    >
+                      Product ID
+                      <ArrowUpDown className="h-3 w-3" />
+                    </button>
+                  </th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">
+                    <button
+                      onClick={() => handleSort('name')}
+                      className="flex items-center gap-1 transition-colors hover:text-text"
+                    >
+                      Name
+                      <ArrowUpDown className="h-3 w-3" />
+                    </button>
+                  </th>
                   <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Manufacturer</th>
                   <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Registered</th>
                   <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-muted/60">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
-                {filteredItems.map((item) => (
+                {rawItems.map((item) => (
                   <tr
                     key={item.id}
                     className="transition-colors hover:bg-white/[0.02]"
@@ -296,17 +341,12 @@ export default function Products() {
         )}
 
         {/* Pagination */}
-        {!tableLoading && filteredItems.length > 0 && (
+        {!tableLoading && rawItems.length > 0 && (
           <div className="flex items-center justify-between border-t border-white/[0.06] px-6 py-4">
             <p className="text-sm text-muted">
               Page <span className="text-text">{page}</span> of{' '}
               <span className="text-text">{totalPages}</span>{' '}
               <span className="text-muted/50">({totalRaw} total)</span>
-              {nameSearch && (
-                <span className="ml-2 text-accent">
-                  filtered from current page
-                </span>
-              )}
             </p>
             <div className="flex items-center gap-2">
               <Button

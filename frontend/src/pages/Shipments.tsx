@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -7,7 +7,7 @@ import { useShipments, useCreateShipment, useUpdateShipment } from '@/hooks/useA
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ShipmentSchema, type ShipmentFormData } from '@/schemas'
-import { Truck, Plus, Pencil, ChevronLeft, ChevronRight, AlertCircle, Package } from 'lucide-react'
+import { Truck, Plus, Pencil, ChevronLeft, ChevronRight, AlertCircle, Package, Search } from 'lucide-react'
 import { formatDate } from '@/utils/formatters'
 import type { Shipment } from '@/types'
 
@@ -37,22 +37,30 @@ const DEFAULT_LIMIT = 10
 
 export default function Shipments() {
   const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(DEFAULT_LIMIT)
   const [statusFilter, setStatusFilter] = useState('all')
+  const [serverSearch, setServerSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingShipment, setEditingShipment] = useState<Shipment | null>(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(serverSearch), 300)
+    return () => clearTimeout(timer)
+  }, [serverSearch])
 
   const {
     data,
     isLoading,
     error,
-  } = useShipments(page, DEFAULT_LIMIT, statusFilter)
+  } = useShipments(page, limit, statusFilter, debouncedSearch || undefined)
 
   const createShipment = useCreateShipment()
   const updateShipment = useUpdateShipment()
 
   const shipments: Shipment[] = Array.isArray(data) ? data : data?.items ?? []
   const total = Array.isArray(data) ? data.length : data?.total ?? 0
-  const totalPages = Math.max(1, Math.ceil(total / DEFAULT_LIMIT))
+  const totalPages = Math.max(1, Math.ceil(total / limit))
 
   const {
     register,
@@ -135,24 +143,52 @@ export default function Shipments() {
       {/* ─── Filters ─────────────────────────────────────────────── */}
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-2xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted/40" />
+            <input
+              type="text"
+              placeholder="Search by origin or destination..."
+              value={serverSearch}
+              onChange={(e) => {
+                setServerSearch(e.target.value)
+                setPage(1)
+              }}
+              className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 pl-10 pr-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
+            />
+          </div>
           <div className="flex items-center gap-2">
             <Truck className="h-4 w-4 text-muted/40" />
-            <span className="text-sm text-muted">Status Filter</span>
+            <span className="text-sm text-muted">Status</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value)
+                setPage(1)
+              }}
+              className="rounded-xl border border-white/[0.06] bg-bg py-2.5 pl-3 pr-8 text-sm text-text outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
+            >
+              {statusOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value)
-              setPage(1)
-            }}
-            className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 pl-3 pr-8 text-sm text-text outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10 sm:w-auto"
-          >
-            {statusOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted">Show</span>
+            <select
+              value={limit}
+              onChange={(e) => {
+                setLimit(Number(e.target.value))
+                setPage(1)
+              }}
+              className="rounded-xl border border-white/[0.06] bg-bg py-2.5 pl-3 pr-8 text-sm text-text outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
         </div>
       </div>
 

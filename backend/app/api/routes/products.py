@@ -14,6 +14,7 @@ from app.schemas.product import (
     ProductUpdate,
 )
 from app.schemas.shipment import CheckpointResponse, CustodyTransferResponse
+from app.services.events import broadcaster
 
 router = APIRouter()
 
@@ -32,7 +33,7 @@ def list_products(
 
 
 @router.post("/", response_model=ProductResponse)
-def create_product(
+async def create_product(
     product_in: ProductCreate,
     db: Session = Depends(get_db),
 ):
@@ -50,6 +51,10 @@ def create_product(
     db.add(product)
     db.commit()
     db.refresh(product)
+    await broadcaster.broadcast(
+        "product_created",
+        {"product_id": product.product_id, "name": product.name},
+    )
     return product
 
 

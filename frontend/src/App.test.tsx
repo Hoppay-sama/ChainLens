@@ -21,6 +21,7 @@ vi.mock('@tanstack/react-query', () => ({
     defaultOptions = {}
   },
   QueryClientProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }))
 
 vi.mock('@vercel/analytics/react', () => ({
@@ -98,6 +99,11 @@ vi.mock('recharts', () => ({
 vi.mock('@/hooks/useApi', () => ({
   useKPIData: () => ({ data: null, isLoading: false, error: null }),
   useProducts: () => ({ data: [], isLoading: false, error: null }),
+  useDailyVolume: () => ({ data: null, isLoading: false, error: null }),
+}))
+
+vi.mock('@/hooks/useSSE', () => ({
+  useAnalyticsEvents: () => {},
 }))
 
 // ─── Tests ───

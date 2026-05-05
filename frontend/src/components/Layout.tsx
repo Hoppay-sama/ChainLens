@@ -1,10 +1,10 @@
 import { Suspense } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import LoadingSpinner from './ui/LoadingSpinner'
+import ConnectAndAuth from './ConnectAndAuth'
 
 const navItems = [
   { to: '/', label: 'Dashboard' },
@@ -78,11 +78,7 @@ export default function Layout() {
           {/* Right side - Wallet + Mobile Menu */}
           <div className="flex items-center gap-4">
             <div className="hidden sm:block">
-              <ConnectButton
-                showBalance={false}
-                accountStatus="address"
-                chainStatus="icon"
-              />
+              <ConnectAndAuth />
             </div>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
