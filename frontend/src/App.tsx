@@ -8,6 +8,7 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { rainbowKitConfig } from './config/wagmi'
 import EtherealBackground from './components/EtherealBackground'
+import ErrorBoundary from './components/ErrorBoundary'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 
@@ -45,15 +46,17 @@ function App() {
             <EtherealBackground />
             <Analytics />
             <SpeedInsights />
-            <Routes>
-              <Route element={<Layout />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/shipments" element={<Shipments />} />
-                <Route path="/analytics" element={<AnalyticsPage />} />
-                <Route path="/verify" element={<Verify />} />
-              </Route>
-            </Routes>
+            <ErrorBoundary>
+              <Routes>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/shipments" element={<Shipments />} />
+                  <Route path="/analytics" element={<AnalyticsPage />} />
+                  <Route path="/verify" element={<Verify />} />
+                </Route>
+              </Routes>
+            </ErrorBoundary>
           </BrowserRouter>
         </RainbowKitProvider>
       </QueryClientProvider>

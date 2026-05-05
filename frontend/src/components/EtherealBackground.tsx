@@ -34,11 +34,10 @@ export default function EtherealBackground() {
     }
 
     const defer = (cb: () => void): number => {
-      const w = window as any
-      if (w.requestIdleCallback) {
-        return w.requestIdleCallback(cb, { timeout: 2000 })
+      if (window.requestIdleCallback) {
+        return window.requestIdleCallback(cb, { timeout: 2000 })
       }
-      return w.setTimeout(cb, 1500)
+      return window.setTimeout(cb, 1500)
     }
 
     const initParticles = () => {
@@ -155,9 +154,8 @@ export default function EtherealBackground() {
 
     return () => {
       isMountedRef.current = false
-      const w = window as any
-      if (w.cancelIdleCallback) {
-        w.cancelIdleCallback(idleHandle!)
+      if (window.cancelIdleCallback) {
+        window.cancelIdleCallback(idleHandle!)
       } else {
         clearTimeout(idleHandle)
       }

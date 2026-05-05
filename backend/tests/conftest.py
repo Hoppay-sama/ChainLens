@@ -1,8 +1,13 @@
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+# Force SQLite for tests so app.core.database never tries to import psycopg2.
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 from app.core.database import Base, get_db
 from app.main import app
