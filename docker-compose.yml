@@ -1,19 +1,19 @@
 version: "3.9"
 
 services:
-  db:
+  postgres:
     image: postgres:15-alpine
     restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: veritras
-      POSTGRES_PASSWORD: veritras
-      POSTGRES_DB: veritras
+      POSTGRES_USER: ${POSTGRES_USER:-veritras}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-veritras}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U veritras -d veritras"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-veritras} -d ${POSTGRES_DB:-veritras}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,9 +26,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+psycopg2://veritras:veritras@db:5432/veritras
+      DATABASE_URL: ${DATABASE_URL:-postgresql://veritras:changeme@postgres:5432/veritras}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
@@ -42,15 +43,22 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://localhost:8000
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     restart: unless-stopped
     ports:
-      # Production (nginx)
       - "3000:80"
-      # Development (Vite)
-      # - "5173:5173"
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
     depends_on:
       - backend
+
+  blockchain:
+    build:
+      context: ./blockchain
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8545:8545"
 
 volumes:
   postgres_data:

@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+__pycache__
+.env
+.env.local
+coverage
+.vscode
+.idea
+npm-debug.log*

@@ -1,10 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { Product, Shipment } from '@/types'
+import { getAuthToken, clearAuthToken } from './useAuth'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-async function fetchApi(endpoint: string) {
-  const response = await fetch(`${API_URL}${endpoint}`)
+async function fetchApi(endpoint: string, options?: RequestInit) {
+  const token = getAuthToken()
+  const headers: Record<string, string> = {
+    ...(options?.headers as Record<string, string> || {}),
+  }
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers,
+  })
+
+  if (response.status === 401) {
+    clearAuthToken()
+  }
+
   if (!response.ok) {
     const errorText = await response.text().catch(() => response.statusText)
     throw new Error(`API Error (${response.status}): ${errorText || response.statusText}`)
@@ -92,7 +110,12 @@ export async function exportAnalytics(format: 'csv' | 'pdf', startDate?: string,
   const params = new URLSearchParams({ format })
   if (startDate) params.append('start_date', startDate)
   if (endDate) params.append('end_date', endDate)
-  const response = await fetch(`${API_URL}/analytics/export?${params}`)
+  const response = await fetch(`${API_URL}/analytics/export?${params}`, {
+    headers: getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {},
+  })
+  if (response.status === 401) {
+    clearAuthToken()
+  }
   if (!response.ok) throw new Error('Export failed')
   const blob = await response.blob()
   const url = window.URL.createObjectURL(blob)
@@ -158,16 +181,11 @@ export function useCreateProduct() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (data: ProductMutationInput) => {
-      const response = await fetch(`${API_URL}/products`, {
+      return fetchApi('/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      if (!response.ok) {
-        const err = await response.text().catch(() => 'Failed to create product')
-        throw new Error(err)
-      }
-      return response.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
@@ -179,16 +197,11 @@ export function useUpdateProduct() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ product_id, data }: { product_id: string; data: ProductMutationInput }) => {
-      const response = await fetch(`${API_URL}/products/${product_id}`, {
+      return fetchApi(`/products/${product_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      if (!response.ok) {
-        const err = await response.text().catch(() => 'Failed to update product')
-        throw new Error(err)
-      }
-      return response.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
@@ -200,16 +213,11 @@ export function useCreateShipment() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (data: ShipmentMutationInput) => {
-      const response = await fetch(`${API_URL}/shipments`, {
+      return fetchApi('/shipments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      if (!response.ok) {
-        const err = await response.text().catch(() => 'Failed to create shipment')
-        throw new Error(err)
-      }
-      return response.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shipments'] })
@@ -221,16 +229,11 @@ export function useUpdateShipment() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ shipment_id, data }: { shipment_id: string; data: Omit<ShipmentMutationInput, 'product_id'> }) => {
-      const response = await fetch(`${API_URL}/shipments/${shipment_id}`, {
+      return fetchApi(`/shipments/${shipment_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      if (!response.ok) {
-        const err = await response.text().catch(() => 'Failed to update shipment')
-        throw new Error(err)
-      }
-      return response.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shipments'] })

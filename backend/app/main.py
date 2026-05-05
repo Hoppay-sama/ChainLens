@@ -15,6 +15,7 @@ from web3 import Web3
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.core.limiter import limiter
+from app.core.security import SecurityHeadersMiddleware
 from app.api.routes import products, shipments, analytics
 
 logger = logging.getLogger("veritras.api")
@@ -55,13 +56,19 @@ if settings.is_production and (not origins or has_wildcard):
 
 allow_credentials = not has_wildcard
 
+if allow_credentials and has_wildcard:
+    logger.warning("CORS allow_credentials=True is used with wildcard origin '*'. This is a security risk.")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins if origins else ["*"],
     allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
+    max_age=600,
 )
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 @app.middleware("http")
