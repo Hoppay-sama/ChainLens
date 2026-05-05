@@ -3,7 +3,17 @@ module.exports = {
     collect: {
       url: ['http://localhost:4173/'],
       startServerCommand: 'npx vite preview --port 4173 --host',
+      startServerReadyPattern: 'Local:',
+      startServerReadyTimeout: 30000,
       numberOfRuns: 3,
+      settings: {
+        chromeFlags: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+        ],
+      },
     },
     assert: {
       assertions: {
