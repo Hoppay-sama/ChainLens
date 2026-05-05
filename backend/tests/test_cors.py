@@ -300,3 +300,44 @@ class TestCorsProductionGuard:
         monkeypatch.setattr(main_module.settings, "environment", "development")
         monkeypatch.setattr(main_module.settings, "cors_origins", "")
         importlib.reload(main_module)
+
+
+class TestApiResponseHeaders:
+    """Verify API endpoints return correct response headers."""
+
+    def test_products_content_type_is_json(self, client_fixture, seeded_db):
+        response = client_fixture.get("/products/")
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/json"
+
+    def test_shipments_content_type_is_json(self, client_fixture, seeded_db):
+        response = client_fixture.get("/shipments/")
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/json"
+
+    def test_analytics_kpis_content_type_is_json(self, client_fixture, seeded_db):
+        response = client_fixture.get("/analytics/kpis")
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/json"
+
+    def test_shipments_preflight_includes_cors_headers(self, client_fixture, seeded_db):
+        response = client_fixture.options(
+            "/shipments/",
+            headers={
+                "Origin": TEST_ORIGIN,
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        assert response.status_code == 200
+        assert "access-control-allow-origin" in response.headers
+
+    def test_analytics_export_preflight_includes_cors_headers(self, client_fixture, seeded_db):
+        response = client_fixture.options(
+            "/analytics/export",
+            headers={
+                "Origin": TEST_ORIGIN,
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        assert response.status_code == 200
+        assert "access-control-allow-origin" in response.headers
