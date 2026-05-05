@@ -46,20 +46,35 @@ docker run -p 8000:8000 --env-file .env veritras-backend
 
 ## Database Migrations
 
-Initialize Alembic (first time only):
-```bash
-alembic init alembic
-```
+Migrations are managed with [Alembic](https://alembic.sqlalchemy.org/). The configuration lives in `alembic.ini` and `alembic/env.py`.
 
-Generate a migration:
-```bash
-alembic revision --autogenerate -m "Initial migration"
-```
+### Quick Reference
 
-Run migrations:
+Run pending migrations:
 ```bash
 alembic upgrade head
 ```
+
+Generate a new migration after changing models:
+```bash
+alembic revision --autogenerate -m "Add users table"
+```
+
+Downgrade one revision:
+```bash
+alembic downgrade -1
+```
+
+Show current revision:
+```bash
+alembic current
+```
+
+### Development Notes
+
+- `Base.metadata.create_all()` in `app.main` is still active for local development, so the database will auto-create tables on startup. In production, rely on `alembic upgrade head`.
+- The `alembic/env.py` script imports all models from `app.models` so that `Base.metadata` is fully populated for autogenerate.
+- Both SQLite and PostgreSQL are supported. The database URL is read dynamically from `app.core.config.settings.database_url`.
 
 ## Project Structure
 

@@ -1,7 +1,8 @@
 import pytest
 
 from app.models.product import Product
-from app.schemas.product import ProductResponse
+from app.schemas.product import ProductListResponse, ProductResponse
+from app.schemas.shipment import CheckpointResponse, CustodyTransferResponse
 from datetime import datetime, timezone
 
 
@@ -147,3 +148,44 @@ def test_get_product_verify_404(client_fixture, seeded_products):
     response = client_fixture.get("/products/0xnonexistent/verify")
     assert response.status_code == 404
     assert response.json()["detail"] == "Product not found"
+
+
+def test_get_products_response_validates_against_schema(client_fixture, seeded_products):
+    """GET /products response must conform to ProductListResponse schema."""
+    response = client_fixture.get("/products")
+    assert response.status_code == 200
+    data = response.json()
+    validated = ProductListResponse.model_validate(data)
+    assert validated.total >= 1
+    assert isinstance(validated.items, list)
+    assert len(validated.items) >= 1
+    for item in validated.items:
+        assert isinstance(item, ProductResponse)
+
+
+def test_get_product_detail_contract(client_fixture, seeded_products):
+    """GET /products/{id} response must contain validated product, history, and transfers."""
+    response = client_fixture.get("/products/0x" + "a" * 64)
+    assert response.status_code == 200
+    data = response.json()
+    assert set(data.keys()) == {"product", "history", "transfers"}
+    product = ProductResponse.model_validate(data["product"])
+    assert product.product_id == "0x" + "a" * 64
+    assert isinstance(data["history"], list)
+    assert isinstance(data["transfers"], list)
+    for cp in data["history"]:
+        CheckpointResponse.model_validate(cp)
+    for ct in data["transfers"]:
+        CustodyTransferResponse.model_validate(ct)
+
+
+def test_get_product_verify_contract(client_fixture, seeded_products):
+    """GET /products/{id}/verify response must match expected contract shape."""
+    response = client_fixture.get("/products/0x" + "a" * 64 + "/verify")
+    assert response.status_code == 200
+    data = response.json()
+    assert set(data.keys()) == {"product_id", "is_registered", "is_delivered", "checkpoint_count"}
+    assert data["product_id"] == "0x" + "a" * 64
+    assert isinstance(data["is_registered"], bool)
+    assert isinstance(data["is_delivered"], bool)
+    assert isinstance(data["checkpoint_count"], int)

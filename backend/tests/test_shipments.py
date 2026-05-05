@@ -2,7 +2,12 @@ import pytest
 
 from app.models.product import Product
 from app.models.shipment import Checkpoint, CustodyTransfer
-from app.schemas.shipment import ShipmentResponse
+from app.schemas.shipment import (
+    CheckpointResponse,
+    CustodyTransferResponse,
+    ShipmentListResponse,
+    ShipmentResponse,
+)
 from datetime import datetime, timezone
 
 
@@ -257,3 +262,57 @@ def test_get_transfers_empty(client_fixture, seeded_db):
     assert response.status_code == 200
     data = response.json()
     assert data == []
+
+
+def test_get_shipments_response_validates_against_schema(client_fixture, seeded_db):
+    """GET /shipments response must conform to ShipmentListResponse schema."""
+    for i in range(2):
+        client_fixture.post("/shipments", json={
+            "product_id": "0x" + "b" * 64,
+            "origin": f"Origin {i}",
+            "destination": f"Destination {i}",
+            "status": str(i),
+        })
+    response = client_fixture.get("/shipments")
+    assert response.status_code == 200
+    data = response.json()
+    assert set(data.keys()) == {"items", "total"}
+    validated = ShipmentListResponse.model_validate(data)
+    assert validated.total == 2
+    assert len(validated.items) == 2
+    for item in validated.items:
+        assert isinstance(item, ShipmentResponse)
+
+
+def test_get_shipments_empty_list_contract(client_fixture, seeded_db):
+    """GET /shipments with no shipments must return a valid empty list."""
+    response = client_fixture.get("/shipments")
+    assert response.status_code == 200
+    data = response.json()
+    validated = ShipmentListResponse.model_validate(data)
+    assert validated.total == 0
+    assert validated.items == []
+
+
+def test_get_history_validates_against_schema(client_fixture, seeded_db):
+    """GET /shipments/{id}/history items must conform to CheckpointResponse schema."""
+    response = client_fixture.get("/shipments/0x" + "b" * 64 + "/history")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 2
+    for cp in data:
+        validated = CheckpointResponse.model_validate(cp)
+        assert validated.product_id == "0x" + "b" * 64
+
+
+def test_get_transfers_validates_against_schema(client_fixture, seeded_db):
+    """GET /shipments/{id}/transfers items must conform to CustodyTransferResponse schema."""
+    response = client_fixture.get("/shipments/0x" + "b" * 64 + "/transfers")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    for ct in data:
+        validated = CustodyTransferResponse.model_validate(ct)
+        assert validated.product_id == "0x" + "b" * 64

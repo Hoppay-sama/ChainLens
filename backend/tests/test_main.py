@@ -1,10 +1,19 @@
 from fastapi.testclient import TestClient
+from sqlalchemy import inspect
 from unittest.mock import MagicMock
 
 from app.main import app, w3 as original_w3
 import app.main as main_module
 
 client = TestClient(app)
+
+
+def test_database_schema_matches_models(db_session):
+    """Verify that all expected model tables exist in the database."""
+    inspector = inspect(db_session.bind)
+    table_names = set(inspector.get_table_names())
+    expected = {"products", "checkpoints", "custody_transfers", "shipments"}
+    assert expected.issubset(table_names), f"Missing tables: {expected - table_names}"
 
 
 def test_health_check_degraded():

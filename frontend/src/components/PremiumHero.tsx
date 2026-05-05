@@ -19,13 +19,13 @@ export default function PremiumHero() {
   const navigate = useNavigate()
 
   return (
-    <section className="relative flex min-h-screen flex-col justify-center overflow-hidden px-6 py-20 sm:px-12 lg:px-20">
+    <section className="relative flex min-h-[100dvh] flex-col justify-center overflow-hidden px-6 py-20 sm:px-12 lg:px-20">
       {/* Ambient glow orbs */}
       <div className="pointer-events-none absolute right-0 top-1/4 h-[600px] w-[600px] rounded-full bg-accent/5 blur-[120px]" />
       <div className="pointer-events-none absolute -left-32 bottom-1/4 h-[400px] w-[400px] rounded-full bg-accent2/5 blur-[100px]" />
 
       {/* Main Content - Left Aligned */}
-      <div className="relative z-10 max-w-3xl">
+      <div className="relative z-10 max-w-3xl text-center sm:text-left">
         {/* Top Label */}
         <motion.div
           custom={0}
@@ -46,7 +46,7 @@ export default function PremiumHero() {
           initial="hidden"
           animate="visible"
           variants={fadeIn}
-          className="font-serif leading-[1.05] tracking-tight"
+          className="break-words font-serif leading-[1.05] tracking-tight"
         >
           <span className="block text-[clamp(3.5rem,10vw,8rem)] text-text">
             Track
@@ -78,7 +78,7 @@ export default function PremiumHero() {
           initial="hidden"
           animate="visible"
           variants={fadeIn}
-          className="mt-8 flex flex-wrap items-center gap-4"
+          className="mt-8 flex flex-col items-center gap-4 sm:flex-row"
         >
           <button
             onClick={() => navigate('/products')}
