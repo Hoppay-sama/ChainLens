@@ -3,7 +3,7 @@ import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { rainbowKitConfig } from './config/wagmi'
@@ -48,6 +48,7 @@ function App() {
             <SpeedInsights />
             <ErrorBoundary>
               <Routes>
+                <Route path="/index.html" element={<Navigate to="/" replace />} />
                 <Route element={<Layout />}>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/products" element={<Products />} />
