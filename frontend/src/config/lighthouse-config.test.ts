@@ -24,14 +24,15 @@ describe('Lighthouse CI config', () => {
     expect((config as any).ci).toHaveProperty('upload')
   })
 
-  it('has server ready pattern and timeout to prevent waiting indefinitely (regression: CI timeout)', () => {
+  it('uses staticDistDir instead of startServerCommand (regression: CI server timeout)', () => {
     const require = createRequire(import.meta.url)
     const config = require(configPath)
     const collect = config.ci.collect
 
-    expect(collect.startServerReadyPattern).toBeDefined()
-    expect(collect.startServerReadyPattern).toBe('Local:')
-    expect(collect.startServerReadyTimeout).toBe(60000)
+    // staticDistDir uses LHCI's built-in static server, avoiding vite
+    // preview startup delays that cause timeout on CI runners.
+    expect(collect.staticDistDir).toBe('./dist')
+    expect(collect.startServerCommand).toBeUndefined()
   })
 
   it('has chromeFlags as string with --no-sandbox to prevent Chrome crash on Ubuntu 24.04 (regression: NO_FCP)', () => {
@@ -45,5 +46,15 @@ describe('Lighthouse CI config', () => {
     expect(flags).toContain('--disable-setuid-sandbox')
     expect(flags).toContain('--disable-dev-shm-usage')
     expect(flags).toContain('--disable-features=IsolateOrigins,site-per-process')
+    expect(flags).toContain('--window-size=1920,1080')
+  })
+
+  it('has maxWaitForFCP to allow slow CI runners to render (regression: NO_FCP)', () => {
+    const require = createRequire(import.meta.url)
+    const config = require(configPath)
+    const maxWait = config.ci.collect.settings?.maxWaitForFCP
+
+    expect(maxWait).toBeDefined()
+    expect(maxWait).toBe(60000)
   })
 })
