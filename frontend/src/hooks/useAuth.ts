@@ -56,17 +56,17 @@ export function useAuth(): AuthState {
 
     try {
       // 1. Fetch nonce from backend
-      const nonceRes = await fetch(`${API_URL}/auth/nonce?address=${address}`)
+      const nonceRes = await fetch(`${API_URL}/auth/nonce`)
       if (!nonceRes.ok) {
         throw new Error('Failed to fetch nonce')
       }
       const { nonce } = await nonceRes.json()
 
-      // 2. Create SIWE message
+      // 2. Create SIWE message (Sepolia chain ID: 11155111)
       const domain = window.location.host
       const uri = window.location.origin
       const issuedAt = new Date().toISOString()
-      const message = `${domain} wants you to sign in with your Ethereum account:\n${address}\n\nSign in to Veritras\n\nURI: ${uri}\nVersion: 1\nChain ID: 1\nNonce: ${nonce}\nIssued At: ${issuedAt}`
+      const message = `${domain} wants you to sign in with your Ethereum account:\n${address}\n\nSign in to Veritras\n\nURI: ${uri}\nVersion: 1\nChain ID: 11155111\nNonce: ${nonce}\nIssued At: ${issuedAt}`
 
       // 3. Sign message with wallet
       const signature = await signMessageAsync({ message })

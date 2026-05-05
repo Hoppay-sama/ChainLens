@@ -49,7 +49,7 @@ def build_siwe_message(address: str, nonce: str) -> str:
         f"Sign in to Veritras\n\n"
         f"URI: https://veritras.io\n"
         f"Version: 1\n"
-        f"Chain ID: 1\n"
+        f"Chain ID: 11155111\n"
         f"Nonce: {nonce}\n"
         f"Issued At: {now}"
     )
