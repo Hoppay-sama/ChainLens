@@ -64,7 +64,7 @@ class ShipmentResponse(ShipmentBase):
     block_number: int
     tx_hash: str
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra='forbid')
 
 
 class ShipmentListResponse(BaseModel):

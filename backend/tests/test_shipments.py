@@ -2,6 +2,7 @@ import pytest
 
 from app.models.product import Product
 from app.models.shipment import Checkpoint, CustodyTransfer
+from app.schemas.shipment import ShipmentResponse
 from datetime import datetime, timezone
 
 
@@ -94,6 +95,23 @@ def test_post_shipment_returns_created_shipment_with_generated_id(client_fixture
     assert data["updated_at"] is not None
 
 
+def test_post_shipment_response_validates_against_schema(client_fixture, seeded_db):
+    """Regression test: POST /shipments response must conform to ShipmentResponse schema."""
+    payload = {
+        "product_id": "0x" + "b" * 64,
+        "origin": "Schema Validation Origin",
+        "destination": "Schema Validation Destination",
+        "status": "0",
+    }
+    response = client_fixture.post("/shipments", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    validated = ShipmentResponse.model_validate(data)
+    assert validated.origin == payload["origin"]
+    assert validated.created_at is not None
+    assert validated.updated_at is not None
+
+
 def test_post_shipment_returns_422_for_nonexistent_product(client_fixture, seeded_db):
     """Creating a shipment for a non-existent product should fail gracefully."""
     payload = {
@@ -131,6 +149,33 @@ def test_put_shipment_updates_existing_shipment(client_fixture, seeded_db):
     assert data["notes"] == "Updated notes"
     assert data["destination"] == "Old Destination"
     assert data["shipment_id"] == shipment_id
+
+
+def test_put_shipment_response_validates_against_schema(client_fixture, seeded_db):
+    """Regression test: PUT /shipments/{id} response must conform to ShipmentResponse schema."""
+    create_payload = {
+        "product_id": "0x" + "b" * 64,
+        "origin": "Old Origin",
+        "destination": "Old Destination",
+        "status": "0",
+        "notes": "Old notes",
+    }
+    create_response = client_fixture.post("/shipments", json=create_payload)
+    shipment_id = create_response.json()["shipment_id"]
+
+    update_payload = {
+        "origin": "New Origin",
+        "status": "1",
+        "notes": "Updated notes",
+    }
+    response = client_fixture.put(f"/shipments/{shipment_id}", json=update_payload)
+    assert response.status_code == 200
+    data = response.json()
+    validated = ShipmentResponse.model_validate(data)
+    assert validated.origin == update_payload["origin"]
+    assert validated.status == update_payload["status"]
+    assert validated.created_at is not None
+    assert validated.updated_at is not None
 
 
 def test_put_shipment_returns_404_for_nonexistent_shipment(client_fixture, seeded_db):
