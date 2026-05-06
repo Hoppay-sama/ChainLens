@@ -7,6 +7,7 @@ import {
   useProduct,
   useKPIData,
   useCreateProduct,
+  useUpdateProduct,
 } from './useApi'
 
 const createTestQueryClient = () =>
@@ -137,7 +138,7 @@ describe('useApi hooks', () => {
 
       await result.current.mutateAsync({
         name: 'Test Product',
-        manufacturer: '0x1234567890123456789012345678901234567890',
+        manufacturer_address: '0x1234567890123456789012345678901234567890',
       })
 
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['products'] })
@@ -155,9 +156,56 @@ describe('useApi hooks', () => {
       await expect(
         result.current.mutateAsync({
           name: 'Test',
-          manufacturer: '0x1234567890123456789012345678901234567890',
+          manufacturer_address: '0x1234567890123456789012345678901234567890',
         })
       ).rejects.toThrow('Invalid data')
+    })
+
+    it('sends manufacturer_address in the request body (regression)', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ id: 1, product_id: 'PROD-001' })),
+      } as Response)
+      globalThis.fetch = fetchMock
+
+      const { result } = renderHook(() => useCreateProduct(), { wrapper })
+
+      await result.current.mutateAsync({
+        name: 'Test Product',
+        manufacturer_address: '0x1234567890123456789012345678901234567890',
+      })
+
+      const [, options] = fetchMock.mock.calls[0]
+      const body = JSON.parse(options.body as string)
+
+      expect(body).toHaveProperty('manufacturer_address', '0x1234567890123456789012345678901234567890')
+      expect(body).not.toHaveProperty('manufacturer')
+    })
+  })
+
+  describe('useUpdateProduct', () => {
+    it('sends manufacturer_address in the request body (regression)', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ id: 1, product_id: 'PROD-001' })),
+      } as Response)
+      globalThis.fetch = fetchMock
+
+      const { result } = renderHook(() => useUpdateProduct(), { wrapper })
+
+      await result.current.mutateAsync({
+        product_id: 'PROD-001',
+        data: {
+          name: 'Updated Product',
+          manufacturer_address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+        },
+      })
+
+      const [, options] = fetchMock.mock.calls[0]
+      const body = JSON.parse(options.body as string)
+
+      expect(body).toHaveProperty('manufacturer_address', '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd')
+      expect(body).not.toHaveProperty('manufacturer')
     })
   })
 })

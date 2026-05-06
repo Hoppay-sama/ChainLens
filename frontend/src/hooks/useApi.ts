@@ -166,7 +166,7 @@ export function useShipments(page = 1, limit = 10, status?: string, search?: str
 
 export interface ProductMutationInput {
   name: string
-  manufacturer: string
+  manufacturer_address: string
   metadata_uri?: string
 }
 

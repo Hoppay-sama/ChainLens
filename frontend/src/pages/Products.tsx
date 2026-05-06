@@ -141,14 +141,14 @@ export default function Products() {
     resolver: zodResolver(ProductSchema),
     defaultValues: {
       name: '',
-      manufacturer: '',
+      manufacturer_address: '',
       metadata_uri: '',
     },
   })
 
   const openAddModal = () => {
     setEditingProduct(null)
-    reset({ name: '', manufacturer: '', metadata_uri: '' })
+    reset({ name: '', manufacturer_address: '', metadata_uri: '' })
     setModalOpen(true)
   }
 
@@ -156,7 +156,7 @@ export default function Products() {
     setEditingProduct(productItem)
     reset({
       name: productItem.name,
-      manufacturer: productItem.manufacturer_address,
+      manufacturer_address: productItem.manufacturer_address,
       metadata_uri: productItem.metadata_uri ?? '',
     })
     setModalOpen(true)
@@ -590,12 +590,12 @@ export default function Products() {
               Manufacturer Address
             </label>
             <input
-              {...register('manufacturer')}
+              {...register('manufacturer_address')}
               placeholder="0x..."
               className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
             />
-            {errors.manufacturer && (
-              <p className="mt-1 text-xs text-red-400">{errors.manufacturer.message}</p>
+            {errors.manufacturer_address && (
+              <p className="mt-1 text-xs text-red-400">{errors.manufacturer_address.message}</p>
             )}
           </div>
 

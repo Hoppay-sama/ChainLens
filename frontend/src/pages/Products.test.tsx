@@ -119,4 +119,17 @@ describe('Products', () => {
       expect(screen.getByText('No products match your search')).toBeInTheDocument()
     })
   })
+
+  it('product form uses manufacturer_address as the input name (regression)', async () => {
+    renderWithProviders(<Products />)
+
+    fireEvent.click(screen.getByRole('button', { name: /add product/i }))
+
+    const manufacturerInput = screen.getByPlaceholderText('0x...')
+    fireEvent.change(manufacturerInput, {
+      target: { value: '0x1234567890123456789012345678901234567890' },
+    })
+
+    expect(manufacturerInput).toHaveAttribute('name', 'manufacturer_address')
+  })
 })
