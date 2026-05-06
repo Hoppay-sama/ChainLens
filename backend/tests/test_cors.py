@@ -304,6 +304,26 @@ class TestCorsEdgeCases:
         assert result == ["https://app.example.com", "https://admin.example.com"]
 
 
+class TestCorsOriginEnvFallback:
+    """Verify CORS_ORIGIN env var is used when CORS_ORIGINS is absent."""
+
+    def test_cors_origin_env_var_is_used_when_plural_missing(self, monkeypatch):
+        import app.core.config as config_module
+
+        monkeypatch.delenv("CORS_ORIGINS", raising=False)
+        monkeypatch.setenv("CORS_ORIGIN", "https://legacy.app.com")
+        monkeypatch.setattr(config_module.settings, "cors_origins", "")
+        monkeypatch.setattr(config_module.settings, "cors_origin", "http://localhost:5173")
+        assert config_module.settings.effective_cors_origins == "https://legacy.app.com"
+
+    def test_cors_origins_env_var_takes_precedence_over_cors_origin(self, monkeypatch):
+        import app.core.config as config_module
+
+        monkeypatch.setenv("CORS_ORIGINS", "https://new.app.com")
+        monkeypatch.setenv("CORS_ORIGIN", "https://legacy.app.com")
+        assert config_module.settings.effective_cors_origins == "https://new.app.com"
+
+
 class TestCorsDefaultConfig:
     """Verify the Settings default prevents silent CORS breakage."""
 
@@ -311,7 +331,31 @@ class TestCorsDefaultConfig:
         from app.core.config import Settings
 
         field = Settings.model_fields["cors_origins"]
+        assert field.default == ""
+
+    def test_default_cors_origin_is_localhost(self):
+        from app.core.config import Settings
+
+        field = Settings.model_fields["cors_origin"]
         assert field.default == "http://localhost:5173"
+
+    def test_effective_cors_origins_prefers_plural(self):
+        from app.core.config import Settings
+
+        s = Settings(cors_origins="https://a.com", cors_origin="https://b.com")
+        assert s.effective_cors_origins == "https://a.com"
+
+    def test_effective_cors_origins_falls_back_to_singular(self):
+        from app.core.config import Settings
+
+        s = Settings(cors_origins="", cors_origin="https://b.com")
+        assert s.effective_cors_origins == "https://b.com"
+
+    def test_effective_cors_origins_falls_back_to_default(self):
+        from app.core.config import Settings
+
+        s = Settings()
+        assert s.effective_cors_origins == "http://localhost:5173"
 
 
 class TestCorsProductionGuard:
@@ -322,12 +366,14 @@ class TestCorsProductionGuard:
 
         monkeypatch.setattr(main_module.settings, "environment", "production")
         monkeypatch.setattr(main_module.settings, "cors_origins", "")
+        monkeypatch.setattr(main_module.settings, "cors_origin", "")
         with pytest.raises(RuntimeError, match="CORS_ORIGINS must be set"):
             importlib.reload(main_module)
 
         # Restore original state
         monkeypatch.setattr(main_module.settings, "environment", "development")
         monkeypatch.setattr(main_module.settings, "cors_origins", "")
+        monkeypatch.setattr(main_module.settings, "cors_origin", "http://localhost:5173")
         importlib.reload(main_module)
 
     def test_wildcard_cors_origins_raises_runtime_error_in_production(self, monkeypatch):
@@ -335,12 +381,14 @@ class TestCorsProductionGuard:
 
         monkeypatch.setattr(main_module.settings, "environment", "production")
         monkeypatch.setattr(main_module.settings, "cors_origins", "*")
+        monkeypatch.setattr(main_module.settings, "cors_origin", "")
         with pytest.raises(RuntimeError, match="CORS_ORIGINS must be set"):
             importlib.reload(main_module)
 
         # Restore original state
         monkeypatch.setattr(main_module.settings, "environment", "development")
         monkeypatch.setattr(main_module.settings, "cors_origins", "")
+        monkeypatch.setattr(main_module.settings, "cors_origin", "http://localhost:5173")
         importlib.reload(main_module)
 
 
@@ -383,3 +431,14 @@ class TestApiResponseHeaders:
         )
         assert response.status_code == 200
         assert "access-control-allow-origin" in response.headers
+
+    def test_health_cors_endpoint_exists(self, client_fixture):
+        """Regression: /health/cors must expose current CORS config for debugging."""
+        response = client_fixture.get("/health/cors")
+        assert response.status_code == 200
+        data = response.json()
+        assert "cors_origins_raw" in data
+        assert "cors_origins_parsed" in data
+        assert "allow_credentials" in data
+        assert "environment" in data
+        assert isinstance(data["cors_origins_parsed"], list)

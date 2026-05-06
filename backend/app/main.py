@@ -45,7 +45,10 @@ def parse_cors_origins(cors_origins: str) -> list[str]:
     return origins
 
 
-origins = parse_cors_origins(settings.cors_origins)
+cors_raw = settings.effective_cors_origins
+logger.info("CORS config — raw value: %r", cors_raw)
+
+origins = parse_cors_origins(cors_raw)
 has_wildcard = "*" in origins
 
 if settings.is_production and (not origins or has_wildcard):
@@ -118,3 +121,14 @@ def health_check():
         status_code=status_code,
         content={"status": status, "database": db_status, "web3": web3_status},
     )
+
+
+@app.get("/health/cors")
+def health_cors():
+    """Expose currently configured CORS origins for production debugging."""
+    return {
+        "cors_origins_raw": settings.effective_cors_origins,
+        "cors_origins_parsed": origins,
+        "allow_credentials": allow_credentials,
+        "environment": settings.environment,
+    }
