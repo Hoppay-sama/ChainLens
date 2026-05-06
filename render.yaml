@@ -26,7 +26,7 @@ services:
       - key: SHIPMENT_TRACKER_CONTRACT
         value: 0x95b09C0aeD53f6b63C072F4ecaC18861FcbBFB30
       - key: CORS_ORIGINS
-        value: https://chain-lens-two.vercel.app
+        value: https://veritras.vercel.app
       # Secrets to set in Render Dashboard (can also override CORS_ORIGINS there):
       # - DATABASE_URL
       # - SEPOLIA_RPC_URL

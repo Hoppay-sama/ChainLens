@@ -152,6 +152,48 @@ class TestCorsHeadersOnResponses:
         else:
             assert "access-control-allow-credentials" not in response.headers
 
+    def test_auth_nonce_preflight_includes_allow_origin(self, client_fixture):
+        """Regression: auth endpoints must receive CORS headers for wallet login."""
+        response = client_fixture.options(
+            "/auth/nonce",
+            headers={
+                "Origin": TEST_ORIGIN,
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        assert response.status_code == 200
+        assert "access-control-allow-origin" in response.headers
+        if EXPECTED_CREDENTIALS:
+            assert response.headers.get("access-control-allow-credentials") == EXPECTED_CREDENTIALS
+
+    def test_auth_verify_preflight_includes_allow_origin(self, client_fixture):
+        """Regression: POST /auth/verify was blocked by CORS in production."""
+        response = client_fixture.options(
+            "/auth/verify",
+            headers={
+                "Origin": TEST_ORIGIN,
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type",
+            },
+        )
+        assert response.status_code == 200
+        assert "access-control-allow-origin" in response.headers
+        if EXPECTED_CREDENTIALS:
+            assert response.headers.get("access-control-allow-credentials") == EXPECTED_CREDENTIALS
+
+    def test_auth_verify_post_includes_allow_origin(self, client_fixture):
+        """Regression: POST /auth/verify must return CORS headers on actual request."""
+        response = client_fixture.post(
+            "/auth/verify",
+            headers={"Origin": TEST_ORIGIN},
+            json={"message": "invalid", "signature": "0xdeadbeef"},
+        )
+        # We expect 400/401, but CORS headers must be present regardless
+        assert response.status_code in (400, 401)
+        assert response.headers.get("access-control-allow-origin") == EXPECTED_HEADER
+        if EXPECTED_CREDENTIALS:
+            assert response.headers.get("access-control-allow-credentials") == EXPECTED_CREDENTIALS
+
 
 class TestCorsOriginParsing:
     """Unit tests for parse_cors_origins."""
