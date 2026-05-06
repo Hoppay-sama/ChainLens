@@ -45,12 +45,12 @@ export function useRecordCheckpoint() {
           args: [productId, location, status, notes],
         },
         {
-          onSuccess: (txHash) => {
+          onSuccess: (txHash: string) => {
             toast.success('Checkpoint recorded', {
               description: `Tx: ${txHash.slice(0, 10)}...`,
             })
           },
-          onError: (err) => {
+          onError: (err: Error) => {
             toast.error('Checkpoint failed', {
               description: err.message,
             })
@@ -93,12 +93,12 @@ export function useTransferCustody() {
           args: [productId, newHandler],
         },
         {
-          onSuccess: (txHash) => {
+          onSuccess: (txHash: string) => {
             toast.success('Custody transferred', {
               description: `Tx: ${txHash.slice(0, 10)}...`,
             })
           },
-          onError: (err) => {
+          onError: (err: Error) => {
             toast.error('Transfer failed', {
               description: err.message,
             })

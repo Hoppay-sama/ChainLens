@@ -1,7 +1,6 @@
 import { useCallback } from 'react'
 import {
   useWriteContract,
-  useSimulateContract,
   useWaitForTransactionReceipt,
 } from 'wagmi'
 import { toast } from 'sonner'
@@ -11,12 +10,6 @@ import {
 } from '@/config/contracts'
 
 export function useRegisterProduct() {
-  const { data: config } = useSimulateContract({
-    abi: productRegistryAbi,
-    address: PRODUCT_REGISTRY_ADDRESS as `0x${string}`,
-    functionName: 'registerProduct',
-  })
-
   const {
     writeContract,
     data: hash,
@@ -43,12 +36,12 @@ export function useRegisterProduct() {
           args: [productId, name, description, metadataURI],
         },
         {
-          onSuccess: (txHash) => {
+          onSuccess: (txHash: string) => {
             toast.success('Transaction submitted', {
               description: `Hash: ${txHash.slice(0, 10)}...`,
             })
           },
-          onError: (err) => {
+          onError: (err: Error) => {
             toast.error('Transaction failed', {
               description: err.message,
             })
