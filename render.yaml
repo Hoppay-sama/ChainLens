@@ -30,5 +30,6 @@ services:
       # Secrets to set in Render Dashboard (can also override CORS_ORIGINS there):
       # - DATABASE_URL
       # - SEPOLIA_RPC_URL
+      # - JWT_SECRET_KEY  (required in production; defaults to unsafe dev key)
     healthCheckPath: /health
     autoDeploy: true

@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     indexer_start_block: int = Field(default=0)
     api_host: str = Field(default="0.0.0.0")
     api_port: int = Field(default=8000)
+    jwt_secret_key: str = Field(default="dev-secret-change-in-production")
+    jwt_algorithm: str = Field(default="HS256")
+    jwt_expiration_hours: int = Field(default=24)
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
