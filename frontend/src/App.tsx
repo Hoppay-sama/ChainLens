@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
+import { Toaster } from 'sonner'
 import { rainbowKitConfig } from './config/wagmi'
 import EtherealBackground from './components/EtherealBackground'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -46,6 +47,7 @@ function App() {
             <EtherealBackground />
             <Analytics />
             <SpeedInsights />
+            <Toaster position="top-right" richColors />
             <ErrorBoundary>
               <Routes>
                 <Route path="/index.html" element={<Navigate to="/" replace />} />
