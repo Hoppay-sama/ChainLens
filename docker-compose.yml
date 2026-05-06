@@ -28,6 +28,12 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://veritras:changeme@postgres:5432/veritras}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      SEPOLIA_RPC_URL: ${SEPOLIA_RPC_URL:-}
+      PRODUCT_REGISTRY_CONTRACT: ${PRODUCT_REGISTRY_CONTRACT:-}
+      SHIPMENT_TRACKER_CONTRACT: ${SHIPMENT_TRACKER_CONTRACT:-}
+      INDEXER_POLL_INTERVAL: ${INDEXER_POLL_INTERVAL:-15}
+      INDEXER_START_BLOCK: ${INDEXER_START_BLOCK:-0}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-secret-change-in-production}
     depends_on:
       postgres:
         condition: service_healthy

@@ -17,10 +17,12 @@ from app.core.database import engine, Base
 from app.core.limiter import limiter
 from app.core.security import SecurityHeadersMiddleware
 from app.api.routes import auth, products, shipments, analytics
+from app.services.indexer import EventIndexer
 
 logger = logging.getLogger("veritras.api")
 
 w3: Optional[Web3] = None
+indexer: Optional[EventIndexer] = None
 if settings.sepolia_rpc_url:
     w3 = Web3(Web3.HTTPProvider(settings.sepolia_rpc_url))
 
@@ -28,7 +30,23 @@ if settings.sepolia_rpc_url:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+
+    global indexer
+    if settings.sepolia_rpc_url and settings.product_registry_contract and settings.shipment_tracker_contract:
+        try:
+            indexer = EventIndexer()
+            indexer.start()
+            logger.info("Blockchain indexer started")
+        except Exception as e:
+            logger.error(f"Failed to start blockchain indexer: {e}")
+    else:
+        logger.info("Blockchain indexer skipped — missing RPC URL or contract addresses")
+
     yield
+
+    if indexer:
+        indexer.stop()
+        logger.info("Blockchain indexer stopped")
 
 
 app = FastAPI(title="Veritras API", version="0.1.0", lifespan=lifespan)
