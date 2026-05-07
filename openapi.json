@@ -1,0 +1,1591 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Veritras API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/auth/nonce": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Get Nonce",
+        "description": "Generate a random nonce for SIWE authentication.",
+        "operationId": "get_nonce_auth_nonce_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NonceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Verify",
+        "description": "Verify a SIWE signature and return a JWT access token.",
+        "operationId": "verify_auth_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/": {
+      "get": {
+        "tags": [
+          "products"
+        ],
+        "summary": "List Products",
+        "description": "List all registered products with pagination.",
+        "operationId": "list_products_products__get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "products"
+        ],
+        "summary": "Create Product",
+        "description": "Create a new product.",
+        "operationId": "create_product_products__post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/{product_id}": {
+      "put": {
+        "tags": [
+          "products"
+        ],
+        "summary": "Update Product",
+        "description": "Update an existing product.",
+        "operationId": "update_product_products__product_id__put",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Product Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "products"
+        ],
+        "summary": "Get Product",
+        "description": "Get a single product by its product_id, including history and custody transfers.",
+        "operationId": "get_product_products__product_id__get",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Product Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Product Products  Product Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/{product_id}/verify": {
+      "get": {
+        "tags": [
+          "products"
+        ],
+        "summary": "Verify Product",
+        "description": "Return verification status for a product.",
+        "operationId": "verify_product_products__product_id__verify_get",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Product Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Verify Product Products  Product Id  Verify Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/": {
+      "get": {
+        "tags": [
+          "shipments"
+        ],
+        "summary": "Get All Shipments",
+        "description": "List all shipments with optional status filter and pagination.",
+        "operationId": "get_all_shipments_shipments__get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "shipments"
+        ],
+        "summary": "Create Shipment",
+        "description": "Create a new shipment.",
+        "operationId": "create_shipment_shipments__post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShipmentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/{shipment_id}": {
+      "put": {
+        "tags": [
+          "shipments"
+        ],
+        "summary": "Update Shipment",
+        "description": "Update an existing shipment.",
+        "operationId": "update_shipment_shipments__shipment_id__put",
+        "parameters": [
+          {
+            "name": "shipment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Shipment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShipmentUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/{product_id}/history": {
+      "get": {
+        "tags": [
+          "shipments"
+        ],
+        "summary": "Get Checkpoint History",
+        "description": "Get checkpoint history for a given product.",
+        "operationId": "get_checkpoint_history_shipments__product_id__history_get",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Product Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CheckpointResponse"
+                  },
+                  "title": "Response Get Checkpoint History Shipments  Product Id  History Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/{product_id}/transfers": {
+      "get": {
+        "tags": [
+          "shipments"
+        ],
+        "summary": "Get Custody Transfers",
+        "description": "Get custody transfer history for a given product.",
+        "operationId": "get_custody_transfers_shipments__product_id__transfers_get",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Product Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustodyTransferResponse"
+                  },
+                  "title": "Response Get Custody Transfers Shipments  Product Id  Transfers Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/kpis": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get Kpis",
+        "description": "Return key performance indicators for the supply chain.",
+        "operationId": "get_kpis_analytics_kpis_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KPIResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/anomalies": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get Anomalies",
+        "description": "Detect anomalous shipment transit times using Z-score analysis.",
+        "operationId": "get_anomalies_analytics_anomalies_get",
+        "parameters": [
+          {
+            "name": "z_threshold",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": 0.5,
+              "default": 2.0,
+              "title": "Z Threshold"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AnomalyResponse"
+                  },
+                  "title": "Response Get Anomalies Analytics Anomalies Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/bottlenecks": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get Bottlenecks",
+        "description": "Identify bottleneck locations based on average dwell time between checkpoints.",
+        "operationId": "get_bottlenecks_analytics_bottlenecks_get",
+        "parameters": [
+          {
+            "name": "min_dwell_hours",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": 0.0,
+              "default": 24.0,
+              "title": "Min Dwell Hours"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/export": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Export Analytics",
+        "description": "Export analytics data to CSV or PDF.",
+        "operationId": "export_analytics_analytics_export_get",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "csv",
+                "pdf"
+              ],
+              "type": "string",
+              "default": "csv",
+              "title": "Format"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/daily-volume": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get Daily Volume",
+        "description": "Return daily shipment and product registration counts for the last 7 days.",
+        "operationId": "get_daily_volume_analytics_daily_volume_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyVolumeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/events": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Analytics Events",
+        "description": "Server-Sent Events stream for real-time analytics updates.",
+        "operationId": "analytics_events_analytics_events_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/cors": {
+      "get": {
+        "summary": "Health Cors",
+        "description": "Expose currently configured CORS origins for production debugging.",
+        "operationId": "health_cors_health_cors_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnomalyResponse": {
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Product Id"
+          },
+          "transit_time_hours": {
+            "type": "number",
+            "title": "Transit Time Hours"
+          },
+          "z_score": {
+            "type": "number",
+            "title": "Z Score"
+          },
+          "severity": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Severity"
+          },
+          "flagged_at": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Flagged At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "transit_time_hours",
+          "z_score",
+          "severity",
+          "flagged_at"
+        ],
+        "title": "AnomalyResponse"
+      },
+      "CheckpointResponse": {
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Product Id"
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Location"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Status"
+          },
+          "handler_address": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Handler Address"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "block_number": {
+            "type": "integer",
+            "title": "Block Number"
+          },
+          "tx_hash": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Tx Hash"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "location",
+          "status",
+          "handler_address",
+          "timestamp",
+          "block_number",
+          "tx_hash",
+          "id"
+        ],
+        "title": "CheckpointResponse"
+      },
+      "CustodyTransferResponse": {
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Product Id"
+          },
+          "from_address": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "From Address"
+          },
+          "to_address": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "To Address"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "block_number": {
+            "type": "integer",
+            "title": "Block Number"
+          },
+          "tx_hash": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Tx Hash"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "from_address",
+          "to_address",
+          "timestamp",
+          "block_number",
+          "tx_hash",
+          "id"
+        ],
+        "title": "CustodyTransferResponse"
+      },
+      "DailyVolumeItem": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Name"
+          },
+          "date": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Date"
+          },
+          "shipments": {
+            "type": "integer",
+            "title": "Shipments"
+          },
+          "products": {
+            "type": "integer",
+            "title": "Products"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "date",
+          "shipments",
+          "products"
+        ],
+        "title": "DailyVolumeItem"
+      },
+      "DailyVolumeResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DailyVolumeItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "DailyVolumeResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "KPIResponse": {
+        "properties": {
+          "avg_transit_time_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Transit Time Hours"
+          },
+          "on_time_rate_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On Time Rate Percent"
+          },
+          "total_shipments": {
+            "type": "integer",
+            "title": "Total Shipments"
+          },
+          "active_shipments": {
+            "type": "integer",
+            "title": "Active Shipments"
+          },
+          "delivered_shipments": {
+            "type": "integer",
+            "title": "Delivered Shipments"
+          },
+          "avg_checkpoints_per_shipment": {
+            "type": "number",
+            "title": "Avg Checkpoints Per Shipment"
+          },
+          "bottleneck_locations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Bottleneck Locations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "avg_transit_time_hours",
+          "on_time_rate_percent",
+          "total_shipments",
+          "active_shipments",
+          "delivered_shipments",
+          "avg_checkpoints_per_shipment",
+          "bottleneck_locations"
+        ],
+        "title": "KPIResponse"
+      },
+      "NonceResponse": {
+        "properties": {
+          "nonce": {
+            "type": "string",
+            "title": "Nonce"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nonce"
+        ],
+        "title": "NonceResponse"
+      },
+      "ProductCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "metadata_uri": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Uri"
+          },
+          "manufacturer_address": {
+            "type": "string",
+            "pattern": "^0x[a-fA-F0-9]{40}$",
+            "title": "Manufacturer Address"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "manufacturer_address"
+        ],
+        "title": "ProductCreate"
+      },
+      "ProductListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProductResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "ProductListResponse"
+      },
+      "ProductResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "metadata_uri": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Uri"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "product_id": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Product Id"
+          },
+          "manufacturer_address": {
+            "type": "string",
+            "maxLength": 42,
+            "title": "Manufacturer Address"
+          },
+          "registered_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Registered At"
+          },
+          "block_number": {
+            "type": "integer",
+            "title": "Block Number"
+          },
+          "tx_hash": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Tx Hash"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "id",
+          "product_id",
+          "manufacturer_address",
+          "registered_at",
+          "block_number",
+          "tx_hash"
+        ],
+        "title": "ProductResponse"
+      },
+      "ProductUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "manufacturer_address": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^0x[a-fA-F0-9]{40}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manufacturer Address"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "metadata_uri": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Uri"
+          }
+        },
+        "type": "object",
+        "title": "ProductUpdate"
+      },
+      "ShipmentCreate": {
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Product Id"
+          },
+          "origin": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Origin"
+          },
+          "destination": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Destination"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Status",
+            "default": "0"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "origin",
+          "destination"
+        ],
+        "title": "ShipmentCreate"
+      },
+      "ShipmentListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ShipmentResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "ShipmentListResponse"
+      },
+      "ShipmentResponse": {
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Product Id"
+          },
+          "origin": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Origin"
+          },
+          "destination": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Destination"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Status",
+            "default": "0"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "shipment_id": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Shipment Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "block_number": {
+            "type": "integer",
+            "title": "Block Number"
+          },
+          "tx_hash": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Tx Hash"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "product_id",
+          "origin",
+          "destination",
+          "id",
+          "shipment_id",
+          "created_at",
+          "updated_at",
+          "block_number",
+          "tx_hash"
+        ],
+        "title": "ShipmentResponse"
+      },
+      "ShipmentUpdate": {
+        "properties": {
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "title": "ShipmentUpdate"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VerifyRequest": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "signature": {
+            "type": "string",
+            "title": "Signature"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message",
+          "signature"
+        ],
+        "title": "VerifyRequest"
+      },
+      "VerifyResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token"
+        ],
+        "title": "VerifyResponse"
+      }
+    }
+  }
+}

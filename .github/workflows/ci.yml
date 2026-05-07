@@ -163,3 +163,41 @@ jobs:
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
         run: npx lhci autorun
+
+  openapi-types-check:
+    name: OpenAPI Types Drift Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Regenerate types from openapi.json
+        run: npm run gen:types
+
+      - name: Fail if api.ts is out of sync with openapi.json
+        run: |
+          if ! git diff --exit-code src/types/api.ts; then
+            echo ""
+            echo "::error file=frontend/src/types/api.ts::src/types/api.ts is out of sync with openapi.json."
+            echo "::error::Run 'npm run gen:types' from the frontend/ directory and commit the result."
+            exit 1
+          fi

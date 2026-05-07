@@ -176,4 +176,74 @@ describe('Products', () => {
 
     expect(manufacturerInput).toHaveAttribute('name', 'manufacturer_address')
   })
+
+  it('Add Product modal renders description textarea', () => {
+    renderWithProviders(<Products />)
+
+    fireEvent.click(screen.getByRole('button', { name: /add product/i }))
+
+    expect(
+      screen.getByPlaceholderText('Brief description of the product...')
+    ).toBeInTheDocument()
+  })
+
+  it('Edit Product modal pre-fills description field', async () => {
+    renderWithProviders(<Products />)
+
+    // Click the Edit button for PROD-001 which has description: 'A test product description'
+    fireEvent.click(screen.getByRole('button', { name: 'Edit PROD-001' }))
+
+    // Wait for the modal to open
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+
+    // The description textarea must be present in the edit modal
+    const descriptionTextarea = screen.getByPlaceholderText(
+      'Brief description of the product...'
+    )
+    expect(descriptionTextarea).toBeInTheDocument()
+
+    // Verify the textarea has the 'description' name attribute (registered with react-hook-form)
+    expect(descriptionTextarea).toHaveAttribute('name', 'description')
+  })
+
+  it('Create product form passes description to mutateAsync', async () => {
+    const mockMutateAsync = vi.fn().mockResolvedValue({
+      id: 99,
+      product_id: 'PROD-NEW',
+      name: 'New Product',
+      manufacturer_address: '0x1234567890123456789012345678901234567890',
+      registered_at: new Date().toISOString(),
+    })
+
+    vi.mocked(useCreateProduct).mockReturnValue({
+      mutateAsync: mockMutateAsync,
+      isPending: false,
+      error: null,
+    } as any)
+
+    renderWithProviders(<Products />)
+
+    fireEvent.click(screen.getByRole('button', { name: /add product/i }))
+
+    // Fill in required fields
+    fireEvent.change(screen.getByPlaceholderText('e.g., Organic Coffee Beans'), {
+      target: { value: 'New Product' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('0x...'), {
+      target: { value: '0x1234567890123456789012345678901234567890' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('Brief description of the product...'), {
+      target: { value: 'Test desc' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create Product' }))
+
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ description: 'Test desc' })
+      )
+    })
+  })
 })

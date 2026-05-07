@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { Product, Shipment } from '@/types'
+import type { components } from '@/types/api'
 import { getAuthToken, clearAuthToken } from './useAuth'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -164,19 +165,15 @@ export function useShipments(page = 1, limit = 10, status?: string, search?: str
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
-export interface ProductMutationInput {
-  name: string
-  manufacturer_address: string
-  description?: string
-  metadata_uri?: string
-}
+/** Derived from generated ProductCreate schema */
+export type ProductMutationInput = components['schemas']['ProductCreate']
 
-export interface ShipmentMutationInput {
-  product_id: string
-  origin: string
-  destination: string
-  notes?: string
-}
+/**
+ * ShipmentCreate has `status` as a required field (openapi-typescript v7 emits
+ * @default fields as required TypeScript properties). Callers never pass status
+ * on creation — the backend defaults it — so we Omit it here.
+ */
+export type ShipmentMutationInput = Omit<components['schemas']['ShipmentCreate'], 'status'>
 
 export function useCreateProduct() {
   const queryClient = useQueryClient()

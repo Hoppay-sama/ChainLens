@@ -1,41 +1,31 @@
-export interface Product {
-  id: number
-  product_id: string
-  name: string
-  description: string | null
-  metadata_uri: string | null
-  manufacturer_address: string
-  registered_at: string  // ISO datetime from backend
-  block_number: number
-  tx_hash: string
-}
+import type { components } from './api'
 
-export interface Checkpoint {
-  id: number
-  product_id: string
-  location: string
-  status: string  // "0"=Created, "1"=InTransit, "2"=AtCheckpoint, "3"=Delivered
-  handler_address: string
-  notes: string | null
-  timestamp: string  // ISO datetime
-  block_number: number
-  tx_hash: string
-}
+// ─── Generated aliases (single source of truth from openapi.json) ─────────────
 
-export interface CustodyTransfer {
-  id: number
-  product_id: string
-  from_address: string
-  to_address: string
-  timestamp: string
-  block_number: number
-  tx_hash: string
-}
+export type Product         = components['schemas']['ProductResponse']
+export type Checkpoint      = components['schemas']['CheckpointResponse']
+export type CustodyTransfer = components['schemas']['CustodyTransferResponse']
+export type Shipment        = components['schemas']['ShipmentResponse']
+export type Anomaly         = components['schemas']['AnomalyResponse']
 
+// ─── Manual interfaces (no clean generated equivalent) ───────────────────────
+
+/** Composite detail view: not a named API schema */
 export interface ProductDetail {
   product: Product
   history: Checkpoint[]
   transfers: CustodyTransfer[]
+}
+
+/**
+ * KPIResponse.bottleneck_locations is emitted as { [key: string]: unknown }[]
+ * by openapi-typescript (inline anonymous object in the spec), so we keep
+ * KPIData and BottleneckLocation as manual interfaces to preserve field types.
+ */
+export interface BottleneckLocation {
+  location: string
+  avg_dwell_hours: number
+  incident_count: number
 }
 
 export interface KPIData {
@@ -48,36 +38,9 @@ export interface KPIData {
   bottleneck_locations: BottleneckLocation[]
 }
 
-export interface BottleneckLocation {
-  location: string
-  avg_dwell_hours: number
-  incident_count: number
-}
-
-export interface Anomaly {
-  product_id: string
-  transit_time_hours: number
-  z_score: number
-  severity: 'low' | 'medium' | 'high'
-  flagged_at: string
-}
-
+/** Not a top-level named schema in openapi.json */
 export interface VerificationResult {
   is_registered: boolean
   is_delivered: boolean
   checkpoint_count: number
-}
-
-export interface Shipment {
-  id: number
-  shipment_id: string
-  product_id: string
-  origin: string
-  destination: string
-  status: string // "0"=Created, "1"=InTransit, "2"=AtCheckpoint, "3"=Delivered
-  notes: string | null
-  created_at: string // ISO datetime
-  updated_at: string
-  block_number: number
-  tx_hash: string
 }

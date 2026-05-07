@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toHex, pad } from 'viem'
 import { useAccount } from 'wagmi'
 import Card from '@/components/ui/Card'
@@ -45,6 +45,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { formatAddress, formatDate } from '@/utils/formatters'
+import { toast } from 'sonner'
 import type { Product, Checkpoint, CustodyTransfer } from '@/types'
 
 const statusLabels: Record<string, string> = {
@@ -107,6 +108,9 @@ export default function Products() {
   // ── Blockchain action panel state ─────────────────────────────────────────
   const [showCheckpointForm, setShowCheckpointForm] = useState(false)
   const [showTransferForm, setShowTransferForm] = useState(false)
+
+  // ── Ref for scrolling to product detail section ───────────────────────────
+  const detailSectionRef = useRef<HTMLDivElement>(null)
 
   // Checkpoint form fields
   const [cpLocation, setCpLocation] = useState('')
@@ -256,12 +260,19 @@ export default function Products() {
   }
 
   const closeModal = useCallback(() => {
+    // If the user bails out of the blockchain step without registering on-chain,
+    // show a nudge so they know the product is saved and can be registered later.
+    if (createdProduct !== null && modalStep === 'blockchain' && !registerSuccess) {
+      toast.info('Product saved. Register it on-chain later from the product list.', {
+        description: createdProduct.product_id,
+      })
+    }
     setModalOpen(false)
     setEditingProduct(null)
     setModalStep('form')
     setCreatedProduct(null)
     reset()
-  }, [reset])
+  }, [reset, createdProduct, modalStep, registerSuccess])
 
   // ── Auto-close modal after successful blockchain registration ─────────────
   useEffect(() => {
@@ -299,7 +310,7 @@ export default function Products() {
     setSubmittedId(productId)
     setShowCheckpointForm(false)
     setShowTransferForm(false)
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+    setTimeout(() => detailSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
   const onSubmit = async (formData: ProductFormData) => {
@@ -601,7 +612,7 @@ export default function Products() {
 
       {/* ─── Product Details ───────────────────────────────────────── */}
       {product && !loadingDetail && (
-        <div className="space-y-4">
+        <div ref={detailSectionRef} className="space-y-4">
           <Card variant="accent">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-4">
