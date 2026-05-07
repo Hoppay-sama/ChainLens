@@ -2,6 +2,49 @@ import '@testing-library/jest-dom/vitest'
 import { vi } from 'vitest'
 import React from 'react'
 
+// ── Global wagmi mock ─────────────────────────────────────────────────────────
+// Provides safe no-op defaults for all wagmi hooks used across pages.
+// Individual test files (e.g. Products.test.tsx) may override this with their
+// own vi.mock('wagmi', ...) call — test-file mocks take precedence.
+vi.mock('wagmi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('wagmi')>()
+  return {
+    ...actual,
+    WagmiProvider: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+    useAccount: () => ({ isConnected: false, address: undefined }),
+    useWriteContract: () => ({
+      writeContract: vi.fn(),
+      data: undefined,
+      isPending: false,
+      error: null,
+    }),
+    useWaitForTransactionReceipt: () => ({ isLoading: false, isSuccess: false }),
+  }
+})
+
+// ── Global useShipmentTracker mock ────────────────────────────────────────────
+vi.mock('@/hooks/useShipmentTracker', () => ({
+  useRecordCheckpoint: () => ({
+    record: vi.fn(),
+    hash: undefined,
+    isPending: false,
+    isConfirming: false,
+    isSuccess: false,
+    error: null,
+  }),
+  useTransferCustody: () => ({
+    transfer: vi.fn(),
+    hash: undefined,
+    isPending: false,
+    isConfirming: false,
+    isSuccess: false,
+    error: null,
+  }),
+  StatusLabels: { 0: 'Created', 1: 'In Transit', 2: 'At Checkpoint', 3: 'Delivered' },
+  ShipmentStatus: {},
+}))
+
 vi.mock('framer-motion', () => {
   const motionPropsToFilter = new Set([
     'initial',

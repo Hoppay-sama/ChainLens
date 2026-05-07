@@ -10,6 +10,9 @@ export const ProductSchema = z.object({
   manufacturer_address: z
     .string()
     .regex(ethereumAddressRegex, 'Must be a valid Ethereum address'),
+  description: z
+    .union([z.string().max(500, 'Description must be at most 500 characters'), z.literal('')])
+    .optional(),
   metadata_uri: z
     .union([z.string().url('Must be a valid URL'), z.literal('')])
     .optional(),

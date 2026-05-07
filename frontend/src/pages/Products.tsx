@@ -221,6 +221,7 @@ export default function Products() {
     defaultValues: {
       name: '',
       manufacturer_address: '',
+      description: '',
       metadata_uri: '',
     },
   })
@@ -276,7 +277,7 @@ export default function Products() {
     setEditingProduct(null)
     setModalStep('form')
     setCreatedProduct(null)
-    reset({ name: '', manufacturer_address: '', metadata_uri: '' })
+    reset({ name: '', manufacturer_address: '', description: '', metadata_uri: '' })
     setModalOpen(true)
   }
 
@@ -287,6 +288,7 @@ export default function Products() {
     reset({
       name: productItem.name,
       manufacturer_address: productItem.manufacturer_address,
+      description: productItem.description ?? '',
       metadata_uri: productItem.metadata_uri ?? '',
     })
     setModalOpen(true)
@@ -922,6 +924,21 @@ export default function Products() {
               />
               {errors.manufacturer_address && (
                 <p className="mt-1 text-xs text-red-400">{errors.manufacturer_address.message}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium text-text">
+                Description <span className="text-muted">(optional)</span>
+              </label>
+              <textarea
+                {...register('description')}
+                rows={2}
+                placeholder="Brief description of the product..."
+                className="w-full resize-none rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
+              />
+              {errors.description && (
+                <p className="mt-1 text-xs text-red-400">{errors.description.message}</p>
               )}
             </div>
 

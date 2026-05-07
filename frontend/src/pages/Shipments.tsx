@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { toHex, pad } from 'viem'
+import { useAccount } from 'wagmi'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -7,7 +9,30 @@ import { useShipments, useCreateShipment, useUpdateShipment } from '@/hooks/useA
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ShipmentSchema, type ShipmentFormData } from '@/schemas'
-import { Truck, Plus, Pencil, ChevronLeft, ChevronRight, AlertCircle, Package, Search } from 'lucide-react'
+import {
+  useRecordCheckpoint,
+  useTransferCustody,
+  ShipmentStatus,
+  StatusLabels,
+} from '@/hooks/useShipmentTracker'
+import {
+  Truck,
+  Plus,
+  Pencil,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+  Package,
+  Search,
+  Activity,
+  X,
+  MapPin,
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Link as LinkIcon,
+} from 'lucide-react'
 import { formatDate } from '@/utils/formatters'
 import type { Shipment } from '@/types'
 
@@ -35,20 +60,95 @@ const statusOptions = [
 
 const DEFAULT_LIMIT = 10
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function toBytes32(productId: string): `0x${string}` {
+  const hex = toHex(productId)
+  if (hex.length > 66) {
+    throw new Error(`product_id "${productId}" exceeds 32 bytes and cannot fit in bytes32`)
+  }
+  return pad(hex, { size: 32, dir: 'right' }) as `0x${string}`
+}
+
+function isValidEthAddress(value: string): boolean {
+  return /^0x[0-9a-fA-F]{40}$/.test(value)
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
+
 export default function Shipments() {
+  const { isConnected } = useAccount()
+
+  // ── Pagination / table state ──────────────────────────────────────────────
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(DEFAULT_LIMIT)
   const [statusFilter, setStatusFilter] = useState('all')
   const [serverSearch, setServerSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  // ── Modal state ───────────────────────────────────────────────────────────
   const [modalOpen, setModalOpen] = useState(false)
   const [editingShipment, setEditingShipment] = useState<Shipment | null>(null)
 
+  // ── Selected shipment for on-chain actions ────────────────────────────────
+  const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null)
+
+  // ── Blockchain action panel state ─────────────────────────────────────────
+  const [showCheckpointForm, setShowCheckpointForm] = useState(false)
+  const [showTransferForm, setShowTransferForm] = useState(false)
+
+  // Checkpoint form fields
+  const [cpLocation, setCpLocation] = useState('')
+  const [cpStatus, setCpStatus] = useState<ShipmentStatus>(0)
+  const [cpNotes, setCpNotes] = useState('')
+
+  // Transfer form fields
+  const [txHandler, setTxHandler] = useState('')
+  const [txHandlerError, setTxHandlerError] = useState('')
+
+  // ── Blockchain hooks ──────────────────────────────────────────────────────
+  const {
+    record,
+    isPending: cpPending,
+    isConfirming: cpConfirming,
+    isSuccess: cpSuccess,
+    error: cpError,
+  } = useRecordCheckpoint()
+
+  const {
+    transfer,
+    isPending: txPending,
+    isConfirming: txConfirming,
+    isSuccess: txSuccess,
+    error: txError,
+  } = useTransferCustody()
+
+  // ── Debounce search ───────────────────────────────────────────────────────
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(serverSearch), 300)
     return () => clearTimeout(timer)
   }, [serverSearch])
 
+  // ── Reset checkpoint form after success ───────────────────────────────────
+  useEffect(() => {
+    if (cpSuccess) {
+      setCpLocation('')
+      setCpStatus(0)
+      setCpNotes('')
+      setShowCheckpointForm(false)
+    }
+  }, [cpSuccess])
+
+  // ── Reset transfer custody form after success ─────────────────────────────
+  useEffect(() => {
+    if (txSuccess) {
+      setTxHandler('')
+      setTxHandlerError('')
+      setShowTransferForm(false)
+    }
+  }, [txSuccess])
+
+  // ── API queries ───────────────────────────────────────────────────────────
   const {
     data,
     isLoading,
@@ -62,6 +162,7 @@ export default function Shipments() {
   const total = Array.isArray(data) ? data.length : data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / limit))
 
+  // ── Form ──────────────────────────────────────────────────────────────────
   const {
     register,
     handleSubmit,
@@ -77,6 +178,7 @@ export default function Shipments() {
     },
   })
 
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const openAddModal = () => {
     setEditingShipment(null)
     reset({ product_id: '', origin: '', destination: '', notes: '' })
@@ -92,6 +194,38 @@ export default function Shipments() {
       notes: shipment.notes ?? '',
     })
     setModalOpen(true)
+  }
+
+  const handleTrackShipment = useCallback((shipment: Shipment) => {
+    setSelectedShipment(shipment)
+    setShowCheckpointForm(false)
+    setShowTransferForm(false)
+    setCpLocation('')
+    setCpStatus(0)
+    setCpNotes('')
+    setTxHandler('')
+    setTxHandlerError('')
+  }, [])
+
+  const handleClearSelected = useCallback(() => {
+    setSelectedShipment(null)
+    setShowCheckpointForm(false)
+    setShowTransferForm(false)
+    setCpLocation('')
+    setCpStatus(0)
+    setCpNotes('')
+    setTxHandler('')
+    setTxHandlerError('')
+  }, [])
+
+  const handleSubmitCheckpoint = () => {
+    if (!cpLocation.trim() || !selectedShipment) return
+    record(toBytes32(selectedShipment.product_id), cpLocation.trim(), cpStatus, cpNotes.trim())
+  }
+
+  const handleTransferCustody = () => {
+    if (!isValidEthAddress(txHandler) || !selectedShipment) return
+    transfer(toBytes32(selectedShipment.product_id), txHandler as `0x${string}`)
   }
 
   const onSubmit = async (formData: ShipmentFormData) => {
@@ -116,6 +250,7 @@ export default function Shipments() {
   const isMutating = createShipment.isPending || updateShipment.isPending
   const mutationError = createShipment.error || updateShipment.error
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="animate-fade-in space-y-6 px-6 sm:px-12 lg:px-20">
       {/* ─── Header ──────────────────────────────────────────────── */}
@@ -253,13 +388,26 @@ export default function Shipments() {
                       {formatDate(shipment.created_at)}
                     </td>
                     <td className="px-6 py-4">
-                      <button
-                        onClick={() => openEditModal(shipment)}
-                        className="rounded-lg p-2 text-muted/40 transition-colors hover:bg-white/[0.04] hover:text-text"
-                        aria-label={`Edit shipment ${shipment.shipment_id}`}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleTrackShipment(shipment)}
+                          className={`rounded-lg p-2 transition-colors hover:bg-white/[0.04] hover:text-text ${
+                            selectedShipment?.id === shipment.id
+                              ? 'text-accent'
+                              : 'text-muted/40'
+                          }`}
+                          aria-label={`Track shipment ${shipment.shipment_id}`}
+                        >
+                          <Activity className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => openEditModal(shipment)}
+                          className="rounded-lg p-2 text-muted/40 transition-colors hover:bg-white/[0.04] hover:text-text"
+                          aria-label={`Edit shipment ${shipment.shipment_id}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -297,6 +445,214 @@ export default function Shipments() {
           </div>
         )}
       </div>
+
+      {/* ─── Blockchain Action Panel ────────────────────────────────── */}
+      {selectedShipment !== null && (
+        <div className="space-y-3">
+          {/* Header */}
+          <div className="flex items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4 backdrop-blur-2xl">
+            <div className="flex items-center gap-3">
+              <Activity className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-text">
+                On-Chain Actions —{' '}
+                <span className="font-mono">{selectedShipment.shipment_id}</span>
+              </span>
+            </div>
+            <button
+              onClick={handleClearSelected}
+              className="rounded-lg p-1.5 text-muted/40 transition-colors hover:bg-white/[0.04] hover:text-text"
+              aria-label="Close on-chain actions"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Wallet guard */}
+          {!isConnected ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4 text-sm text-muted backdrop-blur-2xl">
+              <LinkIcon className="h-4 w-4 shrink-0 text-muted/40" />
+              Connect your wallet to use blockchain actions.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* Record Checkpoint */}
+              <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-2xl">
+                <button
+                  onClick={() => setShowCheckpointForm((v) => !v)}
+                  className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-white/[0.02]"
+                >
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-4 w-4 text-accent" />
+                    <span className="text-sm font-medium text-text">Record Checkpoint</span>
+                  </div>
+                  {showCheckpointForm ? (
+                    <ChevronUp className="h-4 w-4 text-muted/60" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted/60" />
+                  )}
+                </button>
+
+                {showCheckpointForm && (
+                  <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-4">
+                    {/* Location */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-text">
+                        Location <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={cpLocation}
+                        onChange={(e) => setCpLocation(e.target.value)}
+                        placeholder="e.g., Port of Rotterdam"
+                        disabled={cpPending || cpConfirming}
+                        className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10 disabled:opacity-50"
+                      />
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-text">
+                        Status
+                      </label>
+                      <select
+                        value={cpStatus}
+                        onChange={(e) => setCpStatus(Number(e.target.value) as ShipmentStatus)}
+                        disabled={cpPending || cpConfirming}
+                        className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10 disabled:opacity-50"
+                      >
+                        {(Object.entries(StatusLabels) as [string, string][]).map(([val, label]) => (
+                          <option key={val} value={val}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-text">
+                        Notes <span className="text-muted">(optional)</span>
+                      </label>
+                      <textarea
+                        value={cpNotes}
+                        onChange={(e) => setCpNotes(e.target.value)}
+                        placeholder="Any additional notes..."
+                        rows={2}
+                        disabled={cpPending || cpConfirming}
+                        className="w-full resize-none rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10 disabled:opacity-50"
+                      />
+                    </div>
+
+                    {/* Error */}
+                    {cpError && (
+                      <p className="text-xs text-red-400">
+                        {cpError instanceof Error ? cpError.message : 'Transaction failed'}
+                      </p>
+                    )}
+
+                    <div className="flex justify-end gap-3">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setShowCheckpointForm(false)}
+                        disabled={cpPending || cpConfirming}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleSubmitCheckpoint}
+                        disabled={cpPending || cpConfirming || !cpLocation.trim()}
+                      >
+                        {(cpPending || cpConfirming) && (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        )}
+                        {cpPending
+                          ? 'Submitting...'
+                          : cpConfirming
+                          ? 'Confirming...'
+                          : 'Submit Checkpoint'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Transfer Custody */}
+              <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-2xl">
+                <button
+                  onClick={() => setShowTransferForm((v) => !v)}
+                  className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-white/[0.02]"
+                >
+                  <div className="flex items-center gap-3">
+                    <ArrowRight className="h-4 w-4 text-accent" />
+                    <span className="text-sm font-medium text-text">Transfer Custody</span>
+                  </div>
+                  {showTransferForm ? (
+                    <ChevronUp className="h-4 w-4 text-muted/60" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted/60" />
+                  )}
+                </button>
+
+                {showTransferForm && (
+                  <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-4">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-text">
+                        New Handler Address <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={txHandler}
+                        onChange={(e) => {
+                          setTxHandler(e.target.value)
+                          setTxHandlerError('')
+                        }}
+                        placeholder="0x..."
+                        disabled={txPending || txConfirming}
+                        className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 font-mono text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10 disabled:opacity-50"
+                      />
+                      {txHandlerError && (
+                        <p className="mt-1 text-xs text-red-400">{txHandlerError}</p>
+                      )}
+                    </div>
+
+                    {/* Error */}
+                    {txError && (
+                      <p className="text-xs text-red-400">
+                        {txError instanceof Error ? txError.message : 'Transaction failed'}
+                      </p>
+                    )}
+
+                    <div className="flex justify-end gap-3">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setShowTransferForm(false)}
+                        disabled={txPending || txConfirming}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleTransferCustody}
+                        disabled={txPending || txConfirming || !txHandler.trim()}
+                      >
+                        {(txPending || txConfirming) && (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        )}
+                        {txPending
+                          ? 'Submitting...'
+                          : txConfirming
+                          ? 'Confirming...'
+                          : 'Transfer'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ─── Add/Edit Modal ────────────────────────────────────────── */}
       <Modal
