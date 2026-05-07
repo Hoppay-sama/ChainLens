@@ -351,10 +351,13 @@ class TestCorsDefaultConfig:
         s = Settings(cors_origins="", cors_origin="https://b.com")
         assert s.effective_cors_origins == "https://b.com"
 
-    def test_effective_cors_origins_falls_back_to_default(self):
+    def test_effective_cors_origins_falls_back_to_default(self, monkeypatch):
         from app.core.config import Settings
 
-        s = Settings()
+        # Clear env vars so the local .env file cannot interfere with the fallback logic.
+        monkeypatch.delenv("CORS_ORIGINS", raising=False)
+        monkeypatch.delenv("CORS_ORIGIN", raising=False)
+        s = Settings(cors_origins="", cors_origin="http://localhost:5173")
         assert s.effective_cors_origins == "http://localhost:5173"
 
 

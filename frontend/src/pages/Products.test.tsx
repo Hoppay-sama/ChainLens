@@ -11,6 +11,50 @@ import {
 } from '@/hooks/useApi'
 import { renderWithProviders } from '@/test/test-utils'
 
+// Intercept wagmi at the module level so the real hooks (which require a
+// WagmiProvider store) never execute inside Products.tsx or its dependencies.
+vi.mock('wagmi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('wagmi')>()
+  return {
+    ...actual,
+    useAccount: () => ({ isConnected: false, address: undefined }),
+    useWriteContract: () => ({ writeContract: vi.fn(), data: undefined, isPending: false, error: null }),
+    useWaitForTransactionReceipt: () => ({ isLoading: false, isSuccess: false }),
+  }
+})
+
+// Short-circuit the local blockchain hooks so their wagmi internals never run.
+vi.mock('@/hooks/useRegisterProduct', () => ({
+  useRegisterProduct: () => ({
+    register: vi.fn(),
+    hash: undefined,
+    isPending: false,
+    isConfirming: false,
+    isSuccess: false,
+    error: null,
+  }),
+}))
+
+vi.mock('@/hooks/useShipmentTracker', () => ({
+  useRecordCheckpoint: () => ({
+    record: vi.fn(),
+    hash: undefined,
+    isPending: false,
+    isConfirming: false,
+    isSuccess: false,
+    error: null,
+  }),
+  useTransferCustody: () => ({
+    transfer: vi.fn(),
+    hash: undefined,
+    isPending: false,
+    isConfirming: false,
+    isSuccess: false,
+    error: null,
+  }),
+  StatusLabels: { 0: 'Created', 1: 'In Transit', 2: 'At Checkpoint', 3: 'Delivered' },
+}))
+
 vi.mock('@/hooks/useApi', () => ({
   useProductsPaginated: vi.fn(),
   useProduct: vi.fn(),

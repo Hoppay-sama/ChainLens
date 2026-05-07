@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { toHex, pad } from 'viem'
+import { useAccount } from 'wagmi'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
@@ -15,6 +17,13 @@ import {
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ProductSchema, type ProductFormData } from '@/schemas'
+import { useRegisterProduct } from '@/hooks/useRegisterProduct'
+import {
+  useRecordCheckpoint,
+  useTransferCustody,
+  ShipmentStatus,
+  StatusLabels,
+} from '@/hooks/useShipmentTracker'
 import {
   Search,
   MapPin,
@@ -30,6 +39,10 @@ import {
   ChevronRight,
   Eye,
   ArrowUpDown,
+  ChevronDown,
+  ChevronUp,
+  Link as LinkIcon,
+  Loader2,
 } from 'lucide-react'
 import { formatAddress, formatDate } from '@/utils/formatters'
 import type { Product, Checkpoint, CustodyTransfer } from '@/types'
@@ -50,21 +63,109 @@ const statusVariant: Record<string, 'default' | 'blue' | 'orange' | 'success'> =
 
 const DEFAULT_LIMIT = 10
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function toBytes32(productId: string): `0x${string}` {
+  const hex = toHex(productId) // UTF-8 → hex
+  // bytes32 can hold at most 32 bytes (64 hex chars + "0x" prefix = 66 chars).
+  if (hex.length > 66) {
+    throw new Error(
+      `product_id "${productId}" exceeds 32 bytes and cannot fit in bytes32`
+    )
+  }
+  // Solidity bytes32 string literals are right-padded with zeroes.
+  return pad(hex, { size: 32, dir: 'right' }) as `0x${string}`
+}
+
+function isValidEthAddress(value: string): boolean {
+  return /^0x[0-9a-fA-F]{40}$/.test(value)
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
+
 export default function Products() {
+  const { isConnected } = useAccount()
+
+  // ── Pagination / table state ──────────────────────────────────────────────
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(DEFAULT_LIMIT)
   const [serverSearch, setServerSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [sortBy, setSortBy] = useState<'product_id' | 'name' | null>(null)
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+
+  // ── Modal state ───────────────────────────────────────────────────────────
   const [modalOpen, setModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [modalStep, setModalStep] = useState<'form' | 'blockchain'>('form')
+  const [createdProduct, setCreatedProduct] = useState<Product | null>(null)
 
+  // ── Detail / lookup state ─────────────────────────────────────────────────
+  const [searchId, setSearchId] = useState('')
+  const [submittedId, setSubmittedId] = useState('')
+
+  // ── Blockchain action panel state ─────────────────────────────────────────
+  const [showCheckpointForm, setShowCheckpointForm] = useState(false)
+  const [showTransferForm, setShowTransferForm] = useState(false)
+
+  // Checkpoint form fields
+  const [cpLocation, setCpLocation] = useState('')
+  const [cpStatus, setCpStatus] = useState<ShipmentStatus>(0)
+  const [cpNotes, setCpNotes] = useState('')
+
+  // Transfer form fields
+  const [txHandler, setTxHandler] = useState('')
+  const [txHandlerError, setTxHandlerError] = useState('')
+
+  // ── Blockchain hooks ──────────────────────────────────────────────────────
+  const {
+    register: registerOnChain,
+    hash: registerHash,
+    isPending: registerPending,
+    isConfirming: registerConfirming,
+    isSuccess: registerSuccess,
+  } = useRegisterProduct()
+
+  const {
+    record,
+    isPending: cpPending,
+    isConfirming: cpConfirming,
+    isSuccess: cpSuccess,
+  } = useRecordCheckpoint()
+
+  const {
+    transfer,
+    isPending: txPending,
+    isConfirming: txConfirming,
+    isSuccess: txSuccess,
+  } = useTransferCustody()
+
+  // ── Debounce search ───────────────────────────────────────────────────────
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(serverSearch), 300)
     return () => clearTimeout(timer)
   }, [serverSearch])
 
+  // ── Reset checkpoint form after success ───────────────────────────────────
+  useEffect(() => {
+    if (cpSuccess) {
+      setCpLocation('')
+      setCpStatus(0)
+      setCpNotes('')
+      setShowCheckpointForm(false)
+    }
+  }, [cpSuccess])
+
+  // ── Reset transfer custody form after success ─────────────────────────────
+  useEffect(() => {
+    if (txSuccess) {
+      setTxHandler('')
+      setTxHandlerError('')
+      setShowTransferForm(false)
+    }
+  }, [txSuccess])
+
+  // ── API queries ───────────────────────────────────────────────────────────
   const {
     data: paginatedData,
     isLoading: tableLoading,
@@ -83,24 +184,6 @@ export default function Products() {
 
   const totalPages = Math.max(1, Math.ceil(totalRaw / limit))
 
-  const handleSearchChange = (value: string) => {
-    setServerSearch(value)
-    setPage(1)
-  }
-
-  const handleSort = (column: 'product_id' | 'name') => {
-    if (sortBy === column) {
-      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortBy(column)
-      setSortOrder('asc')
-    }
-    setPage(1)
-  }
-
-  const [searchId, setSearchId] = useState('')
-  const [submittedId, setSubmittedId] = useState('')
-
   const {
     data: productDetail,
     isLoading: productLoading,
@@ -117,11 +200,6 @@ export default function Products() {
     isLoading: transfersLoading,
   } = useProductTransfers(submittedId)
 
-  const handleLookupSearch = () => {
-    if (!searchId.trim()) return
-    setSubmittedId(searchId.trim())
-  }
-
   const product = productDetail?.product
   const history: Checkpoint[] = historyData ?? []
   const transfers: CustodyTransfer[] = transfersData ?? []
@@ -132,6 +210,7 @@ export default function Products() {
     productError instanceof Error &&
     (productError.message.includes('404') || productError.message.includes('not found'))
 
+  // ── Form ──────────────────────────────────────────────────────────────────
   const {
     register,
     handleSubmit,
@@ -146,14 +225,65 @@ export default function Products() {
     },
   })
 
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  const handleSearchChange = (value: string) => {
+    setServerSearch(value)
+    setPage(1)
+  }
+
+  const handleSort = (column: 'product_id' | 'name') => {
+    if (sortBy === column) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortBy(column)
+      setSortOrder('asc')
+    }
+    setPage(1)
+  }
+
+  const handleLookupSearch = () => {
+    if (!searchId.trim()) return
+    setSubmittedId(searchId.trim())
+    // Reset blockchain action panels when looking up a new product
+    setShowCheckpointForm(false)
+    setShowTransferForm(false)
+    setCpLocation('')
+    setCpStatus(0)
+    setCpNotes('')
+    setTxHandler('')
+    setTxHandlerError('')
+  }
+
+  const closeModal = useCallback(() => {
+    setModalOpen(false)
+    setEditingProduct(null)
+    setModalStep('form')
+    setCreatedProduct(null)
+    reset()
+  }, [reset])
+
+  // ── Auto-close modal after successful blockchain registration ─────────────
+  useEffect(() => {
+    if (registerSuccess && modalStep === 'blockchain') {
+      const timer = setTimeout(() => {
+        closeModal()
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [registerSuccess, modalStep, closeModal])
+
   const openAddModal = () => {
     setEditingProduct(null)
+    setModalStep('form')
+    setCreatedProduct(null)
     reset({ name: '', manufacturer_address: '', metadata_uri: '' })
     setModalOpen(true)
   }
 
   const openEditModal = (productItem: Product) => {
     setEditingProduct(productItem)
+    setModalStep('form')
+    setCreatedProduct(null)
     reset({
       name: productItem.name,
       manufacturer_address: productItem.manufacturer_address,
@@ -165,30 +295,65 @@ export default function Products() {
   const viewProduct = (productId: string) => {
     setSearchId(productId)
     setSubmittedId(productId)
+    setShowCheckpointForm(false)
+    setShowTransferForm(false)
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
   }
 
   const onSubmit = async (formData: ProductFormData) => {
     try {
       if (editingProduct) {
+        // Edit flow: single-step, no blockchain step
         await updateProduct.mutateAsync({
           product_id: editingProduct.product_id,
           data: formData,
         })
+        closeModal()
       } else {
-        await createProduct.mutateAsync(formData)
+        // Create flow: step 1 — DB record
+        const newProduct = await createProduct.mutateAsync(formData)
+        setCreatedProduct(newProduct)
+        setModalStep('blockchain')
       }
-      setModalOpen(false)
-      reset()
-      setEditingProduct(null)
     } catch {
       // Error handled by mutation state
     }
   }
 
+  const handleRegisterOnChain = () => {
+    if (!createdProduct) return
+    const productIdBytes32 = toBytes32(createdProduct.product_id)
+    registerOnChain(
+      productIdBytes32,
+      createdProduct.name,
+      createdProduct.description ?? '',
+      createdProduct.metadata_uri ?? ''
+    )
+  }
+
+  const handleSubmitCheckpoint = () => {
+    if (!product || !cpLocation.trim()) return
+    const productIdBytes32 = toBytes32(product.product_id)
+    record(productIdBytes32, cpLocation.trim(), cpStatus, cpNotes.trim())
+  }
+
+  const handleTransferCustody = () => {
+    if (!product) return
+    if (!isValidEthAddress(txHandler)) {
+      setTxHandlerError('Must be a valid Ethereum address (0x…40 hex chars)')
+      return
+    }
+    setTxHandlerError('')
+    const productIdBytes32 = toBytes32(product.product_id)
+    transfer(productIdBytes32, txHandler as `0x${string}`)
+  }
+
   const isMutating = createProduct.isPending || updateProduct.isPending
   const mutationError = createProduct.error || updateProduct.error
 
+  const registerBusy = registerPending || registerConfirming
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="animate-fade-in space-y-6 px-6 sm:px-12 lg:px-20">
       {/* ─── Registry Header ───────────────────────────────────────── */}
@@ -468,6 +633,161 @@ export default function Products() {
             </div>
           </Card>
 
+          {/* ─── Blockchain Actions ─────────────────────────────────── */}
+          {isConnected ? (
+            <div className="space-y-3">
+              {/* Record Checkpoint */}
+              <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-2xl">
+                <button
+                  onClick={() => setShowCheckpointForm((v) => !v)}
+                  className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-white/[0.02]"
+                >
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-4 w-4 text-accent" />
+                    <span className="text-sm font-medium text-text">Record Checkpoint</span>
+                  </div>
+                  {showCheckpointForm ? (
+                    <ChevronUp className="h-4 w-4 text-muted/60" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted/60" />
+                  )}
+                </button>
+
+                {showCheckpointForm && (
+                  <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-4">
+                    {/* Location */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-text">
+                        Location <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={cpLocation}
+                        onChange={(e) => setCpLocation(e.target.value)}
+                        placeholder="e.g., Port of Rotterdam"
+                        disabled={cpPending || cpConfirming}
+                        className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10 disabled:opacity-50"
+                      />
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-text">
+                        Status
+                      </label>
+                      <select
+                        value={cpStatus}
+                        onChange={(e) => setCpStatus(Number(e.target.value) as ShipmentStatus)}
+                        disabled={cpPending || cpConfirming}
+                        className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10 disabled:opacity-50"
+                      >
+                        {(Object.entries(StatusLabels) as [string, string][]).map(([val, label]) => (
+                          <option key={val} value={val}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-text">
+                        Notes <span className="text-muted">(optional)</span>
+                      </label>
+                      <textarea
+                        value={cpNotes}
+                        onChange={(e) => setCpNotes(e.target.value)}
+                        placeholder="Any additional notes..."
+                        rows={2}
+                        disabled={cpPending || cpConfirming}
+                        className="w-full resize-none rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10 disabled:opacity-50"
+                      />
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={handleSubmitCheckpoint}
+                        disabled={cpPending || cpConfirming || !cpLocation.trim()}
+                      >
+                        {(cpPending || cpConfirming) && (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        )}
+                        {cpPending
+                          ? 'Submitting...'
+                          : cpConfirming
+                          ? 'Confirming...'
+                          : 'Submit Checkpoint'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Transfer Custody */}
+              <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-2xl">
+                <button
+                  onClick={() => setShowTransferForm((v) => !v)}
+                  className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-white/[0.02]"
+                >
+                  <div className="flex items-center gap-3">
+                    <ArrowRight className="h-4 w-4 text-accent" />
+                    <span className="text-sm font-medium text-text">Transfer Custody</span>
+                  </div>
+                  {showTransferForm ? (
+                    <ChevronUp className="h-4 w-4 text-muted/60" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted/60" />
+                  )}
+                </button>
+
+                {showTransferForm && (
+                  <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-4">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-text">
+                        New Handler Address <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={txHandler}
+                        onChange={(e) => {
+                          setTxHandler(e.target.value)
+                          setTxHandlerError('')
+                        }}
+                        placeholder="0x..."
+                        disabled={txPending || txConfirming}
+                        className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 font-mono text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10 disabled:opacity-50"
+                      />
+                      {txHandlerError && (
+                        <p className="mt-1 text-xs text-red-400">{txHandlerError}</p>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={handleTransferCustody}
+                        disabled={txPending || txConfirming || !txHandler.trim()}
+                      >
+                        {(txPending || txConfirming) && (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        )}
+                        {txPending
+                          ? 'Submitting...'
+                          : txConfirming
+                          ? 'Confirming...'
+                          : 'Transfer'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4 text-sm text-muted backdrop-blur-2xl">
+              <LinkIcon className="h-4 w-4 shrink-0 text-muted/40" />
+              Connect your wallet to record checkpoints or transfer custody on-chain.
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <h3 className="mb-6 font-semibold text-text">Shipment Timeline</h3>
@@ -556,87 +876,165 @@ export default function Products() {
       <Modal
         open={modalOpen}
         onClose={() => {
-          if (!isMutating) {
-            setModalOpen(false)
-            setEditingProduct(null)
-            reset()
+          if (!isMutating && !registerBusy) {
+            closeModal()
           }
         }}
-        title={editingProduct ? 'Edit Product' : 'Add Product'}
+        title={
+          modalStep === 'blockchain'
+            ? 'Register on Blockchain'
+            : editingProduct
+            ? 'Edit Product'
+            : 'Add Product'
+        }
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {mutationError && (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/[0.06] p-3 text-sm text-red-400">
-              {mutationError instanceof Error ? mutationError.message : 'An error occurred'}
-            </div>
-          )}
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-text">
-              Product Name
-            </label>
-            <input
-              {...register('name')}
-              placeholder="e.g., Organic Coffee Beans"
-              className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
-            />
-            {errors.name && (
-              <p className="mt-1 text-xs text-red-400">{errors.name.message}</p>
+        {/* ── Step 1: Form ── */}
+        {modalStep === 'form' && (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {mutationError && (
+              <div className="rounded-xl border border-red-500/20 bg-red-500/[0.06] p-3 text-sm text-red-400">
+                {mutationError instanceof Error ? mutationError.message : 'An error occurred'}
+              </div>
             )}
-          </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-text">
-              Manufacturer Address
-            </label>
-            <input
-              {...register('manufacturer_address')}
-              placeholder="0x..."
-              className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
-            />
-            {errors.manufacturer_address && (
-              <p className="mt-1 text-xs text-red-400">{errors.manufacturer_address.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-text">
-              Metadata URI <span className="text-muted">(optional)</span>
-            </label>
-            <input
-              {...register('metadata_uri')}
-              placeholder="https://..."
-              className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
-            />
-            {errors.metadata_uri && (
-              <p className="mt-1 text-xs text-red-400">{errors.metadata_uri.message}</p>
-            )}
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setModalOpen(false)
-                setEditingProduct(null)
-                reset()
-              }}
-              disabled={isMutating}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isMutating}>
-              {isMutating ? (
-                <LoadingSpinner size="sm" />
-              ) : editingProduct ? (
-                'Save Changes'
-              ) : (
-                'Create Product'
+            <div>
+              <label className="mb-1 block text-sm font-medium text-text">
+                Product Name
+              </label>
+              <input
+                {...register('name')}
+                placeholder="e.g., Organic Coffee Beans"
+                className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
+              />
+              {errors.name && (
+                <p className="mt-1 text-xs text-red-400">{errors.name.message}</p>
               )}
-            </Button>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium text-text">
+                Manufacturer Address
+              </label>
+              <input
+                {...register('manufacturer_address')}
+                placeholder="0x..."
+                className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
+              />
+              {errors.manufacturer_address && (
+                <p className="mt-1 text-xs text-red-400">{errors.manufacturer_address.message}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium text-text">
+                Metadata URI <span className="text-muted">(optional)</span>
+              </label>
+              <input
+                {...register('metadata_uri')}
+                placeholder="https://..."
+                className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
+              />
+              {errors.metadata_uri && (
+                <p className="mt-1 text-xs text-red-400">{errors.metadata_uri.message}</p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={closeModal}
+                disabled={isMutating}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isMutating}>
+                {isMutating ? (
+                  <LoadingSpinner size="sm" />
+                ) : editingProduct ? (
+                  'Save Changes'
+                ) : (
+                  'Create Product'
+                )}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {/* ── Step 2: Blockchain confirmation ── */}
+        {modalStep === 'blockchain' && createdProduct && (
+          <div className="space-y-5">
+            {/* Success banner */}
+            <div className="flex items-start gap-3 rounded-xl border border-accent/20 bg-accent/[0.06] p-4">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-text">
+                  Product created successfully!
+                </p>
+                <p className="font-mono text-xs text-muted">
+                  ID: {createdProduct.product_id}
+                </p>
+              </div>
+            </div>
+
+            {/* Blockchain registration prompt */}
+            {isConnected ? (
+              <div className="space-y-4">
+                <p className="text-sm text-muted">
+                  Register{' '}
+                  <span className="font-mono text-text">{createdProduct.product_id}</span>{' '}
+                  on the Sepolia blockchain to anchor it on-chain.
+                </p>
+
+                {/* Tx hash on success */}
+                {registerSuccess && registerHash && (
+                  <div className="flex items-center gap-2 rounded-xl border border-accent/20 bg-accent/[0.06] px-4 py-3 text-xs">
+                    <LinkIcon className="h-3.5 w-3.5 shrink-0 text-accent" />
+                    <span className="text-muted">Transaction submitted!</span>
+                    <span className="font-mono text-accent break-all">{registerHash}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={closeModal}
+                    disabled={registerBusy}
+                  >
+                    Skip
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleRegisterOnChain}
+                    disabled={registerBusy || registerSuccess}
+                  >
+                    {registerBusy && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {registerPending
+                      ? 'Submitting...'
+                      : registerConfirming
+                      ? 'Confirming...'
+                      : registerSuccess
+                      ? '🔗 Registered!'
+                      : 'Register on Blockchain'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-sm text-muted">
+                  <LinkIcon className="h-4 w-4 shrink-0 text-muted/40" />
+                  Connect your wallet to register this product on the blockchain.
+                </div>
+                <div className="flex justify-end">
+                  <Button type="button" onClick={closeModal}>
+                    Done
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
-        </form>
+        )}
       </Modal>
     </div>
   )
