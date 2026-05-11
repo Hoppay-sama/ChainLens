@@ -170,6 +170,7 @@ export default function Shipments() {
     formState: { errors },
   } = useForm<ShipmentFormData>({
     resolver: zodResolver(ShipmentSchema),
+    mode: 'onChange',
     defaultValues: {
       product_id: '',
       origin: '',

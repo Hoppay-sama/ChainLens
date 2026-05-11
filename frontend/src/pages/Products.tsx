@@ -222,6 +222,7 @@ export default function Products() {
     formState: { errors },
   } = useForm<ProductFormData>({
     resolver: zodResolver(ProductSchema),
+    mode: 'onChange',
     defaultValues: {
       name: '',
       manufacturer_address: '',
