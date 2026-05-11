@@ -6,7 +6,8 @@ import Badge from '@/components/ui/Badge'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Modal from '@/components/ui/Modal'
 import { useShipments, useCreateShipment, useUpdateShipment } from '@/hooks/useApi'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
+import { ProductCombobox } from '@/components/ui/ProductCombobox'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ShipmentSchema, type ShipmentFormData } from '@/schemas'
 import {
@@ -168,6 +169,7 @@ export default function Shipments() {
     handleSubmit,
     reset,
     formState: { errors },
+    control,
   } = useForm<ShipmentFormData>({
     resolver: zodResolver(ShipmentSchema),
     mode: 'onChange',
@@ -678,14 +680,18 @@ export default function Shipments() {
             <label className="mb-1 block text-sm font-medium text-text">
               Product ID
             </label>
-            <input
-              {...register('product_id')}
-              placeholder="e.g., PROD-8842"
-              className="w-full rounded-xl border border-white/[0.06] bg-bg py-2.5 px-4 text-sm text-text placeholder-muted/40 outline-none transition-colors focus:border-accent/30 focus:ring-1 focus:ring-accent/10"
+            <Controller
+              name="product_id"
+              control={control}
+              render={({ field }) => (
+                <ProductCombobox
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={!!editingShipment}
+                  error={errors.product_id?.message}
+                />
+              )}
             />
-            {errors.product_id && (
-              <p className="mt-1 text-xs text-red-400">{errors.product_id.message}</p>
-            )}
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

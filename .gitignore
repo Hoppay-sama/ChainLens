@@ -99,5 +99,6 @@ deployed-contracts.json
 
 #.planning
 .planning/
-scripts//
+scripts/
+docs/
 AGENTS.md

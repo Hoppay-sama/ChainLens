@@ -109,3 +109,8 @@ vi.mock('lucide-react', async (importOriginal) => {
     },
   })
 })
+
+// Default stub: returns no products. Per-file mocks override this.
+vi.mock('@/hooks/useProductList', () => ({
+  useProductList: () => ({ data: undefined, isLoading: false, error: null }),
+}))
