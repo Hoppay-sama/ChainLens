@@ -98,5 +98,6 @@ deployed-contracts.json
 .cursor/
 
 #.planning
-# .planning/
-scripts/
+.planning/
+scripts//
+AGENTS.md
