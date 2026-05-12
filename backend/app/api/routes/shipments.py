@@ -4,6 +4,7 @@ from app.core.limiter import limiter
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
+from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from app.core.database import get_db
 from app.models.product import Product
@@ -21,19 +22,39 @@ from app.services.events import broadcaster
 router = APIRouter()
 
 
+SHIPMENT_SORT_COLUMNS = {
+    "origin": Shipment.origin,
+    "destination": Shipment.destination,
+    "status": Shipment.status,
+    "created_at": Shipment.created_at,
+}
+
+
 @router.get("/", response_model=ShipmentListResponse)
 def get_all_shipments(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=10, ge=1, le=100),
     status: Optional[str] = Query(default=None),
+    search: Optional[str] = Query(default=None),
+    sort_by: Optional[str] = Query(default=None),
+    sort_order: Optional[str] = Query(default="desc"),
     db: Session = Depends(get_db),
 ):
-    """List all shipments with optional status filter and pagination."""
+    """List all shipments with optional status filter, search, sorting, and pagination."""
     query = db.query(Shipment)
     if status is not None:
         query = query.filter(Shipment.status == status)
+    if search:
+        query = query.filter(
+            or_(
+                Shipment.origin.ilike(f"%{search}%"),
+                Shipment.destination.ilike(f"%{search}%"),
+            )
+        )
     total = query.count()
-    items = query.order_by(Shipment.created_at.desc()).offset(skip).limit(limit).all()
+    col = SHIPMENT_SORT_COLUMNS.get(sort_by or "", Shipment.created_at)
+    order = col.asc() if sort_order == "asc" else col.desc()
+    items = query.order_by(order).offset(skip).limit(limit).all()
     return {"items": items, "total": total}
 
 

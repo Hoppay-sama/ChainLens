@@ -316,3 +316,60 @@ def test_get_transfers_validates_against_schema(client_fixture, seeded_db):
     for ct in data:
         validated = CustodyTransferResponse.model_validate(ct)
         assert validated.product_id == "0x" + "b" * 64
+
+
+def test_get_shipments_filters_by_search_origin(client_fixture, seeded_db):
+    """GET /shipments?search=<origin_term> must return only matching shipments."""
+    client_fixture.post("/shipments", json={
+        "product_id": "0x" + "b" * 64,
+        "origin": "Alpha Warehouse",
+        "destination": "Beta Store",
+        "status": "0",
+    })
+    client_fixture.post("/shipments", json={
+        "product_id": "0x" + "b" * 64,
+        "origin": "Gamma Port",
+        "destination": "Delta Hub",
+        "status": "1",
+    })
+    response = client_fixture.get("/shipments?search=Alpha")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["origin"] == "Alpha Warehouse"
+
+
+def test_get_shipments_filters_by_search_destination(client_fixture, seeded_db):
+    """GET /shipments?search=<destination_term> must return only matching shipments."""
+    client_fixture.post("/shipments", json={
+        "product_id": "0x" + "b" * 64,
+        "origin": "Alpha Warehouse",
+        "destination": "Beta Store",
+        "status": "0",
+    })
+    client_fixture.post("/shipments", json={
+        "product_id": "0x" + "b" * 64,
+        "origin": "Gamma Port",
+        "destination": "Delta Hub",
+        "status": "1",
+    })
+    response = client_fixture.get("/shipments?search=Delta")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["destination"] == "Delta Hub"
+
+
+def test_get_shipments_search_returns_empty_when_no_match(client_fixture, seeded_db):
+    """GET /shipments?search=<nonexistent> must return empty list with total=0."""
+    client_fixture.post("/shipments", json={
+        "product_id": "0x" + "b" * 64,
+        "origin": "Origin X",
+        "destination": "Destination Y",
+        "status": "0",
+    })
+    response = client_fixture.get("/shipments?search=ZZZNoMatch")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 0
+    assert data["items"] == []

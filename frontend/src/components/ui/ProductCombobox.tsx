@@ -94,6 +94,12 @@ export function ProductCombobox({ value, onChange, disabled, error }: ProductCom
         </ul>
       )}
 
+      {isOpen && suggestions.length === 0 && value.length > 0 && !isLoading && !fetchError && (
+        <div className="absolute z-50 mt-1 w-full rounded-button border border-border bg-surface px-3 py-2 shadow-card">
+          <p className="text-sm text-muted">No match for &quot;{value}&quot;</p>
+        </div>
+      )}
+
       {error && (
         <p className="mt-1 text-xs text-red-500">{error}</p>
       )}

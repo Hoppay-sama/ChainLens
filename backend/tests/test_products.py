@@ -189,3 +189,35 @@ def test_get_product_verify_contract(client_fixture, seeded_products):
     assert isinstance(data["is_registered"], bool)
     assert isinstance(data["is_delivered"], bool)
     assert isinstance(data["checkpoint_count"], int)
+
+
+def test_get_products_filters_by_search_term(client_fixture, seeded_products):
+    """GET /products?search=<term> must only return products whose name contains the term."""
+    # Create a second product with a different name
+    client_fixture.post("/products", json={
+        "name": "Completely Different Widget",
+        "manufacturer_address": "0x1234567890123456789012345678901234567890",
+    })
+    response = client_fixture.get("/products?search=Test")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["name"] == "Test Product"
+
+
+def test_get_products_search_returns_empty_when_no_match(client_fixture, seeded_products):
+    """GET /products?search=<nonexistent> must return empty list with total=0."""
+    response = client_fixture.get("/products?search=ZZZNoMatch")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 0
+    assert data["items"] == []
+
+
+def test_get_products_search_is_case_insensitive(client_fixture, seeded_products):
+    """GET /products?search= must match regardless of case."""
+    response = client_fixture.get("/products?search=test%20product")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["name"] == "Test Product"

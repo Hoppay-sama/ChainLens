@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from app.core.database import get_db
 from app.core.limiter import limiter
@@ -20,16 +20,30 @@ from app.services.events import broadcaster
 router = APIRouter()
 
 
+PRODUCT_SORT_COLUMNS = {
+    "name": Product.name,
+    "product_id": Product.product_id,
+    "registered_at": Product.registered_at,
+}
+
+
 @router.get("/", response_model=ProductListResponse)
 def list_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    db: Session = Depends(get_db)
+    search: Optional[str] = Query(default=None),
+    sort_by: Optional[str] = Query(default=None),
+    sort_order: Optional[str] = Query(default="asc"),
+    db: Session = Depends(get_db),
 ):
-    """List all registered products with pagination."""
+    """List all registered products with optional search, sorting, and pagination."""
     query = db.query(Product)
+    if search:
+        query = query.filter(Product.name.ilike(f"%{search}%"))
     total = query.count()
-    items = query.offset(skip).limit(limit).all()
+    col = PRODUCT_SORT_COLUMNS.get(sort_by or "", Product.registered_at)
+    order = col.desc() if sort_order == "desc" else col.asc()
+    items = query.order_by(order).offset(skip).limit(limit).all()
     return {"items": items, "total": total}
 
 
