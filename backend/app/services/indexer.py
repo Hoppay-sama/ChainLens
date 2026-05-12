@@ -40,18 +40,10 @@ def timestamp_to_datetime(ts) -> datetime:
 
 
 def load_abi(contract_name: str) -> list:
-    """Load contract ABI from the blockchain artifacts directory."""
-    artifact_path = (
-        BACKEND_DIR.parent
-        / "blockchain"
-        / "artifacts"
-        / "contracts"
-        / f"{contract_name}.sol"
-        / f"{contract_name}.json"
-    )
-    with open(artifact_path, "r") as f:
-        artifact = json.load(f)
-    return artifact["abi"]
+    """Load contract ABI from the bundled abi/ directory inside the backend package."""
+    abi_path = BACKEND_DIR / "app" / "abi" / f"{contract_name}.json"
+    with open(abi_path, "r") as f:
+        return json.load(f)
 
 
 def load_indexer_state() -> Dict:

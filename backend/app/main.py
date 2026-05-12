@@ -19,7 +19,7 @@ from app.core.limiter import limiter
 from app.core.logging import LOGGING_CONFIG
 from app.core.security import SecurityHeadersMiddleware
 from app.api.routes import auth, products, shipments, analytics
-from app.services.indexer import EventIndexer
+from app.services.indexer import EventIndexer, load_indexer_state
 
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger("veritras.api")
@@ -117,6 +117,28 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(products.router, prefix="/products", tags=["products"])
 app.include_router(shipments.router, prefix="/shipments", tags=["shipments"])
 app.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
+
+
+@app.get("/health/indexer")
+def health_indexer():
+    """Expose blockchain indexer status and last processed block."""
+    if indexer is None:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "not_started",
+                "reason": "Missing SEPOLIA_RPC_URL or contract address env vars",
+            },
+        )
+
+    state = load_indexer_state()
+    return {
+        "status": "running" if indexer.running else "stopped",
+        "last_processed_block": state.get("last_processed_block"),
+        "poll_interval_seconds": indexer.poll_interval,
+        "product_registry": indexer.product_registry_address,
+        "shipment_tracker": indexer.shipment_tracker_address,
+    }
 
 
 @app.get("/health")
