@@ -8,9 +8,6 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'list',
   use: {
-    // Dedicated test server on port 3001 — does not conflict with the dev
-    // server on 3000, and always uses VITE_API_URL=http://localhost:8000 so
-    // route interceptors in specs can fulfil requests locally.
     baseURL: 'http://localhost:3001',
     trace: 'on-first-retry',
   },
@@ -21,11 +18,17 @@ export default defineConfig({
     },
   ],
   webServer: {
-    // Run on a dedicated port so we don't conflict with the dev server on 3000.
-    // VITE_API_URL is left as-is from frontend/.env (https://chainlens-4qvy.onrender.com)
-    // so the app's CSP connect-src allows the requests and Playwright can intercept them.
     command: 'npm run dev -- --port 3001',
     url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
+    // Explicitly set VITE_API_URL so the app always fetches from an origin
+    // that (a) is allowed by the index.html CSP connect-src directive and
+    // (b) matches the API_ORIGINS list in e2e/helpers/routes.ts — ensuring
+    // Playwright's CDP route interceptors can fulfil every request.
+    // Without this, CI has no frontend/.env and the app falls back to
+    // http://localhost:8000, which the CSP blocks before Playwright can intercept.
+    env: {
+      VITE_API_URL: 'https://chainlens-4qvy.onrender.com',
+    },
   },
 })
