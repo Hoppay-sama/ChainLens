@@ -102,3 +102,7 @@ deployed-contracts.json
 scripts/
 docs/
 AGENTS.md
+
+# Playwright
+**/test-results/
+**/playwright-report/
