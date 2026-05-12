@@ -75,7 +75,7 @@
           "products"
         ],
         "summary": "List Products",
-        "description": "List all registered products with pagination.",
+        "description": "List all registered products with optional search, sorting, and pagination.",
         "operationId": "list_products_products__get",
         "parameters": [
           {
@@ -99,6 +99,42 @@
               "minimum": 1,
               "default": 100,
               "title": "Limit"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string" },
+                { "type": "null" }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string" },
+                { "type": "null" }
+              ],
+              "title": "Sort By"
+            }
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string" },
+                { "type": "null" }
+              ],
+              "title": "Sort Order"
             }
           }
         ],
@@ -313,7 +349,7 @@
           "shipments"
         ],
         "summary": "Get All Shipments",
-        "description": "List all shipments with optional status filter and pagination.",
+        "description": "List all shipments with optional search, status filter, sorting, and pagination.",
         "operationId": "get_all_shipments_shipments__get",
         "parameters": [
           {
@@ -353,6 +389,42 @@
                 }
               ],
               "title": "Status"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string" },
+                { "type": "null" }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string" },
+                { "type": "null" }
+              ],
+              "title": "Sort By"
+            }
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string" },
+                { "type": "null" }
+              ],
+              "title": "Sort Order"
             }
           }
         ],

@@ -53,7 +53,7 @@ export interface paths {
         };
         /**
          * List Products
-         * @description List all registered products with pagination.
+         * @description List all registered products with optional search, sorting, and pagination.
          */
         get: operations["list_products_products__get"];
         put?: never;
@@ -121,7 +121,7 @@ export interface paths {
         };
         /**
          * Get All Shipments
-         * @description List all shipments with optional status filter and pagination.
+         * @description List all shipments with optional search, status filter, sorting, and pagination.
          */
         get: operations["get_all_shipments_shipments__get"];
         put?: never;
@@ -677,6 +677,9 @@ export interface operations {
             query?: {
                 skip?: number;
                 limit?: number;
+                search?: string | null;
+                sort_by?: string | null;
+                sort_order?: string | null;
             };
             header?: never;
             path?: never;
@@ -844,6 +847,9 @@ export interface operations {
                 skip?: number;
                 limit?: number;
                 status?: string | null;
+                search?: string | null;
+                sort_by?: string | null;
+                sort_order?: string | null;
             };
             header?: never;
             path?: never;
