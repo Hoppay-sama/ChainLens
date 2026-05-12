@@ -1,5 +1,6 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from app.core.limiter import limiter
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -37,7 +38,9 @@ def get_all_shipments(
 
 
 @router.post("/", response_model=ShipmentResponse)
+@limiter.limit("30/minute")
 async def create_shipment(
+    request: Request,
     shipment_in: ShipmentCreate,
     db: Session = Depends(get_db),
 ):
@@ -69,7 +72,9 @@ async def create_shipment(
 
 
 @router.put("/{shipment_id}", response_model=ShipmentResponse)
+@limiter.limit("30/minute")
 def update_shipment(
+    request: Request,
     shipment_id: str,
     shipment_in: ShipmentUpdate,
     db: Session = Depends(get_db),

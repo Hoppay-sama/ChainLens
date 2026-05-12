@@ -1,10 +1,11 @@
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from typing import List
 
 from app.core.database import get_db
+from app.core.limiter import limiter
 from app.models.product import Product
 from app.models.shipment import Checkpoint, CustodyTransfer
 from app.schemas.product import (
@@ -33,7 +34,9 @@ def list_products(
 
 
 @router.post("/", response_model=ProductResponse)
+@limiter.limit("30/minute")
 async def create_product(
+    request: Request,
     product_in: ProductCreate,
     db: Session = Depends(get_db),
 ):
@@ -59,7 +62,9 @@ async def create_product(
 
 
 @router.put("/{product_id}", response_model=ProductResponse)
+@limiter.limit("30/minute")
 def update_product(
+    request: Request,
     product_id: str,
     product_in: ProductUpdate,
     db: Session = Depends(get_db),

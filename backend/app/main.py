@@ -1,4 +1,5 @@
 import logging
+import logging.config
 import time
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -15,10 +16,12 @@ from web3 import Web3
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.core.limiter import limiter
+from app.core.logging import LOGGING_CONFIG
 from app.core.security import SecurityHeadersMiddleware
 from app.api.routes import auth, products, shipments, analytics
 from app.services.indexer import EventIndexer
 
+logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger("veritras.api")
 
 w3: Optional[Web3] = None
@@ -97,14 +100,15 @@ async def log_requests(request: Request, call_next):
     start_time = time.time()
     response = await call_next(request)
     duration_ms = (time.time() - start_time) * 1000
-    client_host = request.client.host if request.client else None
     logger.info(
-        "%s %s %s %s %s",
-        request.method,
-        request.url.path,
-        response.status_code,
-        f"{duration_ms:.2f}ms",
-        client_host,
+        "request",
+        extra={
+            "method": request.method,
+            "path": request.url.path,
+            "status": response.status_code,
+            "duration_ms": round(duration_ms, 2),
+            "client_ip": request.client.host if request.client else None,
+        },
     )
     return response
 
