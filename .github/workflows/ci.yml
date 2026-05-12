@@ -40,8 +40,22 @@ jobs:
       - name: Compile Hardhat contracts
         run: npx hardhat compile
 
-      - name: Run Hardhat tests
-        run: npx hardhat test
+      - name: Run Hardhat tests with coverage
+        run: npx hardhat coverage
+
+      - name: Check coverage thresholds
+        run: |
+          node -e "
+          const s = require('./coverage/coverage-summary.json').total;
+          const checks = [['statements', 95], ['functions', 95], ['branches', 85]];
+          let ok = true;
+          checks.forEach(([k, min]) => {
+            const pct = s[k].pct;
+            if (pct < min) { console.error('FAIL ' + k + ': ' + pct + '% < ' + min + '%'); ok = false; }
+            else { console.log('PASS ' + k + ': ' + pct + '%'); }
+          });
+          if (!ok) process.exit(1);
+          "
 
   backend-tests:
     name: Backend Tests
@@ -103,8 +117,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Vitest unit tests
-        run: npx vitest run
+      - name: Run Vitest unit tests with coverage
+        run: npx vitest run --coverage
 
   frontend-e2e:
     name: Frontend E2E Tests
