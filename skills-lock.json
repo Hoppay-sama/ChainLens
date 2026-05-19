@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "magicpath": {
+      "source": "magicpathai/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/magicpath/SKILL.md",
+      "computedHash": "79e507df005dbcff4d123b506b43de7c4f9a2b4f1f238999bdd7cdbb62dce683"
+    },
     "neon-postgres": {
       "source": "neondatabase/agent-skills",
       "sourceType": "github",
