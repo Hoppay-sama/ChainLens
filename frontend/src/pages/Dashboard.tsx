@@ -80,7 +80,7 @@ export default function Dashboard() {
   const kpis = kpiData
     ? [
         {
-          label: 'Total Products',
+          label: 'Total Shipments',
           value: kpiData.total_shipments?.toLocaleString() ?? '0',
           icon: Package,
           color: '#c8f060',

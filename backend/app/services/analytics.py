@@ -1,45 +1,38 @@
-import pandas as pd
-import numpy as np
+from collections import defaultdict
+from statistics import stdev
 from typing import Optional, List, Dict
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone, timedelta
 
 from app.models.product import Product
-from app.models.shipment import Checkpoint, CustodyTransfer, Shipment
+from app.models.shipment import Checkpoint, Shipment
 from app.schemas.analytics import AnomalyResponse, DailyVolumeItem
 
 
-def _get_checkpoint_data(db: Session) -> pd.DataFrame:
-    """Query all checkpoints and return as a DataFrame."""
-    checkpoints = db.query(Checkpoint).all()
-    if not checkpoints:
-        return pd.DataFrame()
-    data = [
-        {
-            "product_id": cp.product_id,
-            "timestamp": cp.timestamp,
-            "location": cp.location,
-            "status": cp.status,
-        }
-        for cp in checkpoints
-    ]
-    df = pd.DataFrame(data)
-    if not df.empty:
-        df = df.assign(timestamp=pd.to_datetime(df["timestamp"]))
-    return df
-
-
-def _compute_transit_times(db: Session) -> pd.DataFrame:
+def _compute_transit_times(db: Session) -> List[Dict[str, float | str]]:
     """Compute transit time per product in hours."""
-    df = _get_checkpoint_data(db)
-    if df.empty:
-        return pd.DataFrame()
+    rows = (
+        db.query(
+            Checkpoint.product_id,
+            func.min(Checkpoint.timestamp).label("first_seen"),
+            func.max(Checkpoint.timestamp).label("last_seen"),
+        )
+        .group_by(Checkpoint.product_id)
+        .all()
+    )
 
-    grouped = df.groupby("product_id")["timestamp"]
-    transit_times = (grouped.max() - grouped.min()).dt.total_seconds() / 3600.0
-    result = transit_times.reset_index()
-    result.columns = ["product_id", "transit_time_hours"]
-    return result
+    transit_times: List[Dict[str, float | str]] = []
+    for product_id, first_seen, last_seen in rows:
+        if first_seen is None or last_seen is None:
+            continue
+        transit_times.append(
+            {
+                "product_id": product_id,
+                "transit_time_hours": (last_seen - first_seen).total_seconds() / 3600.0,
+            }
+        )
+    return transit_times
 
 
 def calculate_avg_transit_time(db: Session) -> Optional[float]:
@@ -47,33 +40,35 @@ def calculate_avg_transit_time(db: Session) -> Optional[float]:
     Calculate the average transit time between the first and last checkpoint
     for each product, then return the overall average in hours.
     """
-    transit_df = _compute_transit_times(db)
-    if transit_df.empty:
+    transit_times = _compute_transit_times(db)
+    if not transit_times:
         return None
-    return float(transit_df["transit_time_hours"].mean())
+    total_hours = sum(float(row["transit_time_hours"]) for row in transit_times)
+    return total_hours / len(transit_times)
 
 
 def detect_anomalies(db: Session, z_threshold: float = 2.0) -> List[AnomalyResponse]:
     """
     Detect anomalous transit times using Z-score analysis.
     """
-    transit_df = _compute_transit_times(db)
-    if transit_df.empty or len(transit_df) < 2:
+    transit_times = _compute_transit_times(db)
+    if len(transit_times) < 2:
         return []
 
-    mean_tt = transit_df["transit_time_hours"].mean()
-    std_tt = transit_df["transit_time_hours"].std()
-    if std_tt == 0 or pd.isna(std_tt):
+    values = [float(row["transit_time_hours"]) for row in transit_times]
+    mean_tt = sum(values) / len(values)
+    std_tt = stdev(values)
+    if std_tt == 0:
         return []
-
-    transit_df = transit_df.copy()
-    transit_df = transit_df.assign(z_score=(transit_df["transit_time_hours"] - mean_tt) / std_tt)
-    anomalies_df = transit_df[transit_df["z_score"].abs() > z_threshold].copy()
 
     anomalies = []
     now = datetime.now(timezone.utc).isoformat()
-    for _, row in anomalies_df.iterrows():
-        z = abs(row["z_score"])
+    for row in transit_times:
+        transit_hours = float(row["transit_time_hours"])
+        z_score = (transit_hours - mean_tt) / std_tt
+        z = abs(z_score)
+        if z <= z_threshold:
+            continue
         if z > 3.0:
             severity = "high"
         elif z > 2.5:
@@ -82,9 +77,9 @@ def detect_anomalies(db: Session, z_threshold: float = 2.0) -> List[AnomalyRespo
             severity = "low"
         anomalies.append(
             AnomalyResponse(
-                product_id=row["product_id"],
-                transit_time_hours=float(row["transit_time_hours"]),
-                z_score=float(row["z_score"]),
+                product_id=str(row["product_id"]),
+                transit_time_hours=transit_hours,
+                z_score=z_score,
                 severity=severity,
                 flagged_at=now,
             )
@@ -96,11 +91,13 @@ def calculate_on_time_rate(db: Session, expected_hours: float = 72.0) -> Optiona
     """
     Calculate the percentage of shipments delivered within the expected duration.
     """
-    transit_df = _compute_transit_times(db)
-    if transit_df.empty:
+    transit_times = _compute_transit_times(db)
+    if not transit_times:
         return None
-    on_time = (transit_df["transit_time_hours"] <= expected_hours).sum()
-    total = len(transit_df)
+    on_time = sum(
+        1 for row in transit_times if float(row["transit_time_hours"]) <= expected_hours
+    )
+    total = len(transit_times)
     return float((on_time / total) * 100) if total > 0 else None
 
 
@@ -109,60 +106,70 @@ def get_bottleneck_locations(db: Session, min_dwell_hours: float = 24.0) -> List
     Look at consecutive checkpoints for each product and compute dwell time
     at each location. Return locations where average dwell time exceeds threshold.
     """
-    df = _get_checkpoint_data(db)
-    if df.empty:
-        return []
-
-    df = df.sort_values(["product_id", "timestamp"]).copy()
-    df = df.assign(next_timestamp=df.groupby("product_id")["timestamp"].shift(-1))
-    df = df.assign(dwell_hours=(df["next_timestamp"] - df["timestamp"]).dt.total_seconds() / 3600.0)
-    df = df.dropna(subset=["dwell_hours"])
-
-    if df.empty:
-        return []
-
-    location_stats = (
-        df.groupby("location")
-        .agg(avg_dwell_hours=("dwell_hours", "mean"), incident_count=("dwell_hours", "count"))
-        .reset_index()
+    checkpoints = (
+        db.query(Checkpoint.product_id, Checkpoint.location, Checkpoint.timestamp)
+        .order_by(Checkpoint.product_id.asc(), Checkpoint.timestamp.asc())
+        .all()
     )
-    bottlenecks = location_stats[location_stats["avg_dwell_hours"] > min_dwell_hours]
-    bottlenecks = bottlenecks.sort_values("avg_dwell_hours", ascending=False)
+    if not checkpoints:
+        return []
 
-    return [
-        {
-            "location": row["location"],
-            "avg_dwell_hours": float(row["avg_dwell_hours"]),
-            "incident_count": int(row["incident_count"]),
-        }
-        for _, row in bottlenecks.iterrows()
-    ]
+    dwell_by_location: dict[str, list[float]] = defaultdict(list)
+    previous = None
+    for checkpoint in checkpoints:
+        if previous is not None and previous.product_id == checkpoint.product_id:
+            dwell_hours = (
+                checkpoint.timestamp - previous.timestamp
+            ).total_seconds() / 3600.0
+            dwell_by_location[previous.location].append(dwell_hours)
+        previous = checkpoint
+
+    bottlenecks = []
+    for location, dwell_hours in dwell_by_location.items():
+        avg_dwell = sum(dwell_hours) / len(dwell_hours)
+        if avg_dwell > min_dwell_hours:
+            bottlenecks.append(
+                {
+                    "location": location,
+                    "avg_dwell_hours": avg_dwell,
+                    "incident_count": len(dwell_hours),
+                }
+            )
+
+    return sorted(bottlenecks, key=lambda row: row["avg_dwell_hours"], reverse=True)
 
 
 def get_kpi_summary(db: Session) -> Dict:
     """
     Aggregate all KPIs into a single response dict.
     """
-    total_shipments = db.query(Product).count()
+    total_shipments = db.query(Shipment).count()
+    if total_shipments:
+        delivered_shipments = db.query(Shipment).filter(Shipment.status == "3").count()
+        active_shipments = db.query(Shipment).filter(Shipment.status != "3").count()
+    else:
+        delivered_ids = (
+            db.query(Checkpoint.product_id)
+            .filter(Checkpoint.status == "3")
+            .distinct()
+            .subquery()
+        )
+        delivered_shipments = (
+            db.query(Product).filter(Product.product_id.in_(delivered_ids.select())).count()
+        )
 
-    # Products with checkpoints but not delivered = active
-    delivered_ids = (
-        db.query(Checkpoint.product_id)
-        .filter(Checkpoint.status == "3")
-        .distinct()
-        .subquery()
-    )
-    delivered_shipments = db.query(Product).filter(Product.product_id.in_(delivered_ids.select())).count()
-
-    products_with_checkpoints = (
-        db.query(Checkpoint.product_id).distinct().subquery()
-    )
-    active_shipments = (
-        db.query(Product)
-        .filter(Product.product_id.in_(products_with_checkpoints.select()))
-        .filter(Product.product_id.notin_(delivered_ids.select()))
-        .count()
-    )
+        products_with_checkpoints = db.query(Checkpoint.product_id).distinct().subquery()
+        total_shipments = (
+            db.query(Product)
+            .filter(Product.product_id.in_(products_with_checkpoints.select()))
+            .count()
+        )
+        active_shipments = (
+            db.query(Product)
+            .filter(Product.product_id.in_(products_with_checkpoints.select()))
+            .filter(Product.product_id.notin_(delivered_ids.select()))
+            .count()
+        )
 
     avg_transit = calculate_avg_transit_time(db)
     on_time = calculate_on_time_rate(db)
@@ -189,21 +196,27 @@ def get_daily_volume_data(db: Session) -> List[DailyVolumeItem]:
     dates = [today - timedelta(days=i) for i in range(6, -1, -1)]
     start_dt = datetime.combine(dates[0], datetime.min.time())
 
-    products = db.query(Product).filter(Product.registered_at >= start_dt).all()
-    shipments = db.query(Shipment).filter(Shipment.created_at >= start_dt).all()
-
     product_counts: dict[str, int] = {d.isoformat(): 0 for d in dates}
     shipment_counts: dict[str, int] = {d.isoformat(): 0 for d in dates}
 
-    for p in products:
-        if p.registered_at is not None:
-            d = p.registered_at.date().isoformat()
-            product_counts[d] = product_counts.get(d, 0) + 1
+    product_rows = (
+        db.query(func.date(Product.registered_at), func.count(Product.id))
+        .filter(Product.registered_at >= start_dt)
+        .group_by(func.date(Product.registered_at))
+        .all()
+    )
+    shipment_rows = (
+        db.query(func.date(Shipment.created_at), func.count(Shipment.id))
+        .filter(Shipment.created_at >= start_dt)
+        .group_by(func.date(Shipment.created_at))
+        .all()
+    )
 
-    for s in shipments:
-        if s.created_at is not None:
-            d = s.created_at.date().isoformat()
-            shipment_counts[d] = shipment_counts.get(d, 0) + 1
+    for day, count in product_rows:
+        product_counts[day.isoformat() if hasattr(day, "isoformat") else str(day)] = count
+
+    for day, count in shipment_rows:
+        shipment_counts[day.isoformat() if hasattr(day, "isoformat") else str(day)] = count
 
     items: List[DailyVolumeItem] = []
     for d in dates:

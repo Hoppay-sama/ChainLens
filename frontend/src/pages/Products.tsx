@@ -1044,7 +1044,7 @@ export default function Products() {
                       : registerConfirming
                       ? 'Confirming...'
                       : registerSuccess
-                      ? '🔗 Registered!'
+                      ? 'Registered!'
                       : 'Register on Blockchain'}
                   </Button>
                 </div>

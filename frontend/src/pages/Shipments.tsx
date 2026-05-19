@@ -457,7 +457,7 @@ export default function Shipments() {
             <div className="flex items-center gap-3">
               <Activity className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-text">
-                On-Chain Actions —{' '}
+                On-Chain Actions -{' '}
                 <span className="font-mono">{selectedShipment.shipment_id}</span>
               </span>
             </div>
