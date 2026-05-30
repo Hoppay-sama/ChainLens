@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Play, Shield, Zap, Globe } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import heroBanner from '@/assets/hero-banner.png'
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -74,61 +75,100 @@ function VeritrasMark({
   )
 }
 
-function ProvenanceModel() {
-  const nodes = [
-    { label: 'Origin', x: '18%', y: '58%', color: 'bg-accent' },
-    { label: 'Custody', x: '43%', y: '33%', color: 'bg-accent2' },
-    { label: 'Verify', x: '72%', y: '56%', color: 'bg-accent3' },
+function AnimatedHeroBanner() {
+  const routePulses = [
+    {
+      className:
+        'left-[38%] top-[56%] h-px w-[34%] rotate-[18deg] from-accent/0 via-accent/70 to-accent/0',
+      delay: 0,
+    },
+    {
+      className:
+        'left-[52%] top-[41%] h-px w-[28%] -rotate-[24deg] from-accent2/0 via-accent2/70 to-accent2/0',
+      delay: 1.4,
+    },
+    {
+      className:
+        'left-[56%] top-[72%] h-px w-[32%] rotate-[7deg] from-accent3/0 via-accent3/65 to-accent3/0',
+      delay: 2.8,
+    },
+  ]
+
+  const verificationPings = [
+    { className: 'right-[22%] top-[21%] border-accent/60', delay: 0.3 },
+    { className: 'right-[13%] top-[48%] border-accent2/60', delay: 1.6 },
+    { className: 'right-[31%] bottom-[16%] border-accent3/60', delay: 2.7 },
   ]
 
   return (
     <div
       role="img"
       aria-label="Supply-chain provenance model"
-      className="absolute right-8 top-1/2 h-[560px] w-[560px] -translate-y-1/2"
+      className="pointer-events-none absolute inset-y-0 right-[-76vw] w-[185vw] overflow-hidden sm:right-[-48vw] sm:w-[145vw] lg:inset-y-auto lg:right-[-8vw] lg:top-1/2 lg:h-[82vh] lg:w-[70vw] lg:min-w-[760px] lg:-translate-y-1/2"
     >
-      <div className="absolute inset-8 rounded-full border border-white/10 bg-white/[0.015]" />
-      <div className="absolute inset-20 rounded-full border border-dashed border-accent/20" />
-      <div className="absolute left-[14%] top-[52%] h-px w-[62%] -rotate-[19deg] bg-gradient-to-r from-accent/60 via-accent2/50 to-accent3/40" />
-      <div className="absolute left-[42%] top-[37%] h-px w-[34%] rotate-[22deg] bg-gradient-to-r from-accent2/60 to-accent3/40" />
-
-      <div className="absolute left-1/2 top-1/2 h-44 w-44 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/[0.14] to-white/[0.02] shadow-[0_0_60px_rgba(200,240,96,0.12)] backdrop-blur-2xl">
-        <div className="absolute inset-5 rounded-[1.35rem] border border-accent/20" />
-        <div className="absolute inset-10 rounded-xl bg-bg/70" />
-      </div>
-      <VeritrasMark
-        decorative
-        className="absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2"
+      <motion.img
+        data-testid="hero-banner-image"
+        src={heroBanner}
+        alt=""
+        aria-hidden="true"
+        initial={{ opacity: 0, scale: 1.08, x: 36 }}
+        animate={{
+          opacity: 0.84,
+          scale: [1.08, 1.12, 1.08],
+          x: [36, 12, 36],
+          y: [-8, 8, -8],
+        }}
+        transition={{
+          opacity: { duration: 1.2, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 18, repeat: Infinity, ease: 'easeInOut' },
+          x: { duration: 18, repeat: Infinity, ease: 'easeInOut' },
+          y: { duration: 14, repeat: Infinity, ease: 'easeInOut' },
+        }}
+        className="absolute inset-0 h-full w-full object-cover object-right"
       />
 
-      {nodes.map((node) => (
-        <div
-          key={node.label}
-          className="absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-3"
-          style={{ left: node.x, top: node.y }}
-        >
-          <span className={`h-3 w-3 rounded-full ${node.color} shadow-[0_0_18px_currentColor]`} />
-          <span className="rounded-full border border-white/10 bg-bg/70 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted backdrop-blur-xl">
-            {node.label}
-          </span>
-        </div>
+      <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/70 to-bg/10" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_47%,transparent_0%,rgba(10,10,10,0.22)_43%,rgba(10,10,10,0.72)_78%)]" />
+
+      {routePulses.map((pulse) => (
+        <motion.span
+          key={pulse.className}
+          aria-hidden="true"
+          initial={{ opacity: 0, scaleX: 0.18 }}
+          animate={{ opacity: [0, 0.9, 0], scaleX: [0.18, 1, 0.18] }}
+          transition={{
+            duration: 4.8,
+            delay: pulse.delay,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+          className={`absolute origin-left bg-gradient-to-r ${pulse.className}`}
+        />
       ))}
 
-      <div className="absolute right-24 top-24 rounded-2xl border border-white/10 bg-white/[0.035] p-4 backdrop-blur-xl">
-        <div className="h-2 w-16 rounded-full bg-accent/60" />
-        <div className="mt-3 h-2 w-24 rounded-full bg-white/15" />
-        <div className="mt-2 h-2 w-14 rounded-full bg-accent2/35" />
-      </div>
-      <div className="absolute bottom-28 left-24 rounded-2xl border border-white/10 bg-white/[0.035] p-4 backdrop-blur-xl">
-        <div className="grid grid-cols-3 gap-1">
-          {[...Array(9)].map((_, index) => (
-            <span
-              key={index}
-              className={`h-2 w-2 rounded-sm ${index % 2 === 0 ? 'bg-accent/70' : 'bg-white/15'}`}
-            />
-          ))}
-        </div>
-      </div>
+      {verificationPings.map((ping) => (
+        <motion.span
+          key={ping.className}
+          aria-hidden="true"
+          initial={{ opacity: 0, scale: 0.35 }}
+          animate={{ opacity: [0, 0.75, 0], scale: [0.35, 1.8, 2.35] }}
+          transition={{
+            duration: 3.6,
+            delay: ping.delay,
+            repeat: Infinity,
+            ease: 'easeOut',
+          }}
+          className={`absolute h-20 w-20 rounded-full border ${ping.className}`}
+        />
+      ))}
+
+      <motion.div
+        aria-hidden="true"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0.1, 0.28, 0.1] }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute right-[20%] top-[16%] h-[36rem] w-[36rem] rounded-full bg-accent/10 blur-[96px]"
+      />
     </div>
   )
 }
@@ -257,12 +297,7 @@ export default function PremiumHero() {
         ))}
       </motion.div>
 
-      {/* Decorative 3D Element Placeholder - Right Side */}
-      <div className="pointer-events-none absolute right-0 top-1/2 hidden h-[80vh] w-[50vw] -translate-y-1/2 lg:block">
-        <div className="absolute right-1/4 top-1/2 h-[34rem] w-[34rem] -translate-y-1/2 rounded-full bg-gradient-to-br from-accent/10 via-accent2/10 to-transparent blur-[100px]" />
-        <div className="absolute right-1/3 top-1/3 h-64 w-64 rounded-full bg-gradient-to-br from-white/5 to-transparent blur-[60px]" />
-        <ProvenanceModel />
-      </div>
+      <AnimatedHeroBanner />
     </section>
   )
 }
