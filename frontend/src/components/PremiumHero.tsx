@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Play, Shield, Zap, Globe } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import heroBanner from '@/assets/hero-banner.png'
+import BrandLogo from './BrandLogo'
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -14,65 +15,6 @@ const fadeIn = {
       ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
     },
   }),
-}
-
-function VeritrasMark({
-  className = '',
-  decorative = false,
-}: {
-  className?: string
-  decorative?: boolean
-}) {
-  const gradientId = decorative
-    ? 'veritras-mark-stroke-decorative'
-    : 'veritras-mark-stroke'
-
-  return (
-    <div
-      role={decorative ? undefined : 'img'}
-      aria-hidden={decorative ? true : undefined}
-      aria-label={decorative ? undefined : 'Veritras provenance mark'}
-      className={`relative grid place-items-center ${className}`}
-    >
-      <div className="absolute inset-0 rounded-2xl bg-accent/10 blur-md" />
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 64 64"
-        className="relative h-full w-full drop-shadow-[0_0_18px_rgba(200,240,96,0.25)]"
-      >
-        <defs>
-          <linearGradient id={gradientId} x1="8" x2="56" y1="8" y2="56">
-            <stop stopColor="#c8f060" />
-            <stop offset="0.55" stopColor="#60d0f0" />
-            <stop offset="1" stopColor="#f0a060" />
-          </linearGradient>
-        </defs>
-        <path
-          d="M32 5 55 18v27L32 59 9 45V18L32 5Z"
-          fill="rgba(255,255,255,0.025)"
-          stroke={`url(#${gradientId})`}
-          strokeWidth="2"
-        />
-        <path
-          d="m18 22 14 24 14-24"
-          fill="none"
-          stroke="#f0ece4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="4"
-        />
-        <path
-          d="M20 21h24M32 10v10M32 46v8"
-          stroke="#c8f060"
-          strokeLinecap="round"
-          strokeWidth="2"
-        />
-        <circle cx="32" cy="20" r="4" fill="#c8f060" />
-        <circle cx="18" cy="22" r="3" fill="#60d0f0" />
-        <circle cx="46" cy="22" r="3" fill="#f0a060" />
-      </svg>
-    </div>
-  )
 }
 
 function AnimatedHeroBanner() {
@@ -192,7 +134,7 @@ export default function PremiumHero() {
           variants={fadeIn}
           className="mb-6 flex items-center gap-3"
         >
-          <VeritrasMark className="h-9 w-9" />
+          <BrandLogo className="h-11 w-11" label="Veritras provenance mark" />
           <span className="inline-block h-px w-4 bg-accent" />
           <span className="text-[11px] font-medium uppercase tracking-[0.25em] text-accent">
             Where Transparency Becomes Reality

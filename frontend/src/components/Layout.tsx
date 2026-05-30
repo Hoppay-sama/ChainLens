@@ -5,6 +5,7 @@ import { Menu, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import LoadingSpinner from './ui/LoadingSpinner'
 import ConnectAndAuth from './ConnectAndAuth'
+import BrandLogo from './BrandLogo'
 
 const navItems = [
   { to: '/', label: 'Dashboard' },
@@ -39,7 +40,8 @@ export default function Layout() {
       >
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 sm:px-12 lg:px-20">
           {/* Logo */}
-          <NavLink to="/" className="flex items-center gap-2 group">
+          <NavLink to="/" className="group flex items-center gap-2">
+            <BrandLogo className="h-9 w-9" />
             <span className="font-serif text-xl tracking-wider text-text">
               Veritras
             </span>
