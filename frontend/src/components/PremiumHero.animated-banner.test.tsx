@@ -37,4 +37,14 @@ describe('PremiumHero animated banner', () => {
     expect(banner).toHaveAttribute('aria-hidden', 'true')
     expect(banner).toHaveAttribute('src', expect.stringContaining('hero-banner.png'))
   })
+
+  it('centers the animated banner stage across the hero instead of offsetting it right', () => {
+    renderHero()
+
+    const stage = screen.getByRole('img', { name: 'Supply-chain provenance model' })
+
+    expect(stage).toHaveClass('inset-0')
+    expect(stage.className).not.toContain('right-[-')
+    expect(screen.getByTestId('hero-banner-image')).toHaveClass('object-center')
+  })
 })

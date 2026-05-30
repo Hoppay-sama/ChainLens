@@ -104,7 +104,7 @@ function AnimatedHeroBanner() {
     <div
       role="img"
       aria-label="Supply-chain provenance model"
-      className="pointer-events-none absolute inset-y-0 right-[-76vw] w-[185vw] overflow-hidden sm:right-[-48vw] sm:w-[145vw] lg:inset-y-auto lg:right-[-8vw] lg:top-1/2 lg:h-[82vh] lg:w-[70vw] lg:min-w-[760px] lg:-translate-y-1/2"
+      className="pointer-events-none absolute inset-0 overflow-hidden"
     >
       <motion.img
         data-testid="hero-banner-image"
@@ -124,7 +124,7 @@ function AnimatedHeroBanner() {
           x: { duration: 18, repeat: Infinity, ease: 'easeInOut' },
           y: { duration: 14, repeat: Infinity, ease: 'easeInOut' },
         }}
-        className="absolute inset-0 h-full w-full object-cover object-right"
+        className="absolute inset-0 h-full w-full object-cover object-center"
       />
 
       <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/70 to-bg/10" />
