@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Play, Shield, Zap, Globe } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import heroBanner from '@/assets/hero-banner.png'
+import heroBanner from '@/assets/hero-banner.webp'
 import BrandLogo from './BrandLogo'
 
 const fadeIn = {
@@ -53,6 +53,8 @@ function AnimatedHeroBanner() {
         src={heroBanner}
         alt=""
         aria-hidden="true"
+        decoding="async"
+        {...({ fetchpriority: 'high' } as Record<string, string>)}
         initial={{ opacity: 0, scale: 1.08, x: 36 }}
         animate={{
           opacity: 0.84,

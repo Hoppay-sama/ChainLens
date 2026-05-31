@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 test('KPI cards render with mocked values', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page.getByText('Total Products')).toBeVisible()
+  await expect(page.getByText('Total Shipments')).toBeVisible()
   await expect(page.getByText('Active Shipments')).toBeVisible()
   await expect(page.getByText('Avg Transit Time')).toBeVisible()
   await expect(page.getByText('On-Time Rate')).toBeVisible()
