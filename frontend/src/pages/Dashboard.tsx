@@ -127,7 +127,10 @@ export default function Dashboard() {
       <PremiumHero />
 
       {/* Dashboard Content */}
-      <div className="relative mx-auto max-w-7xl px-6 pb-20 sm:px-12 lg:px-20">
+      <div
+        data-testid="dashboard-overview"
+        className="relative z-10 mx-auto -mt-12 max-w-7xl px-6 pb-20 pt-8 sm:-mt-16 sm:px-12 sm:pt-10 lg:-mt-20 lg:px-20"
+      >
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
