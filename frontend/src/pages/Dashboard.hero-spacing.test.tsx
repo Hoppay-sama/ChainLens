@@ -37,13 +37,13 @@ describe('Dashboard hero spacing', () => {
     } as any)
   })
 
-  it('pulls the overview section closer to the hero with controlled transition spacing', () => {
+  it('keeps the overview section below the hero with controlled transition spacing', () => {
     renderWithProviders(<Dashboard />)
 
     const overview = screen.getByTestId('dashboard-overview')
 
-    expect(overview).toHaveClass('-mt-12')
-    expect(overview).toHaveClass('pt-8')
+    expect(overview.className).not.toContain('-mt-')
+    expect(overview).toHaveClass('pt-12')
     expect(screen.getByText('Overview')).toBeInTheDocument()
   })
 })

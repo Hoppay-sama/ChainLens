@@ -129,7 +129,7 @@ export default function Dashboard() {
       {/* Dashboard Content */}
       <div
         data-testid="dashboard-overview"
-        className="relative z-10 mx-auto -mt-12 max-w-7xl px-6 pb-20 pt-8 sm:-mt-16 sm:px-12 sm:pt-10 lg:-mt-20 lg:px-20"
+        className="relative mx-auto max-w-7xl px-6 pb-20 pt-12 sm:px-12 sm:pt-14 lg:px-20 lg:pt-16"
       >
         {/* Section Header */}
         <motion.div
