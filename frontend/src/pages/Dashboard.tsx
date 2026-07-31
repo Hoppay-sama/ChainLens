@@ -11,6 +11,7 @@ import {
   Truck,
   Clock,
   TrendingUp,
+  TrendingDown,
   Activity,
   AlertCircle,
   ArrowUpRight,
@@ -36,6 +37,20 @@ const defaultChartData = [
   { name: 'Sat', shipments: 0, products: 0 },
   { name: 'Sun', shipments: 0, products: 0 },
 ]
+
+/** Mock trend data for KPI cards (direction + percentage change). */
+const KPI_TRENDS: Record<string, { direction: 'up' | 'down'; percent: number }> = {
+  'Total Shipments': { direction: 'up', percent: 18 },
+  'Active Shipments': { direction: 'up', percent: 12 },
+  'Avg Transit Time': { direction: 'down', percent: 8 },
+  'On-Time Rate': { direction: 'up', percent: 5 },
+}
+
+/** Mock summary metrics displayed above the KPI grid. */
+const SUMMARY_MOCK = {
+  totalShipments: 1247,
+  percentChange: 18,
+}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -190,6 +205,25 @@ export default function Dashboard() {
 
         {!isLoading && !error && (
           <>
+            {/* Narrative Summary */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="mb-6 text-sm text-muted"
+            >
+              Your platform tracked{' '}
+              <span className="font-mono text-text">
+                {SUMMARY_MOCK.totalShipments.toLocaleString()}
+              </span>{' '}
+              shipments this month — up{' '}
+              <span className="font-mono text-accent">
+                {SUMMARY_MOCK.percentChange}%
+              </span>{' '}
+              from last month
+            </motion.p>
+
             {/* KPI Grid */}
             <motion.div
               variants={containerVariants}
@@ -231,6 +265,27 @@ export default function Dashboard() {
                           <p className="font-mono text-3xl font-medium text-text">
                             {kpi.value}
                           </p>
+                          {(() => {
+                            const trend = KPI_TRENDS[kpi.label];
+                            if (!trend) return null;
+                            const invert = kpi.label === 'Avg Transit Time';
+                            const positive = invert
+                              ? trend.direction === 'down'
+                              : trend.direction === 'up';
+                            const TrendIcon =
+                              trend.direction === 'up' ? TrendingUp : TrendingDown;
+                            const trendColor = positive
+                              ? 'text-accent'
+                              : 'text-red-400';
+                            return (
+                              <div className={`flex items-center gap-1 pt-1 ${trendColor}`}>
+                                <TrendIcon className="h-3 w-3" />
+                                <span className="text-xs font-medium">
+                                  {trend.percent}%
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </div>
                         <div
                           className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 transition-all group-hover:scale-110"

@@ -1,5 +1,13 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Play, Shield, Zap, Globe } from 'lucide-react'
+import {
+  ArrowRight,
+  Play,
+  Shield,
+  Zap,
+  Globe,
+  MapPin,
+  CheckCircle2,
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import heroBanner from '@/assets/hero-banner.webp'
 import BrandLogo from './BrandLogo'
@@ -16,6 +24,174 @@ const fadeIn = {
     },
   }),
 }
+
+/* ── Provenance chain data ─────────────────────────────────────── */
+
+interface Checkpoint {
+  name: string
+  location: string
+  timestamp: string
+  status: 'completed' | 'in-transit' | 'pending'
+  verified: boolean
+  accentClass: string
+}
+
+const PROVENANCE_CHECKPOINTS: Checkpoint[] = [
+  {
+    name: 'Factory',
+    location: 'Shanghai',
+    timestamp: '2024-03-15 09:23 UTC',
+    status: 'completed',
+    verified: true,
+    accentClass: 'accent',
+  },
+  {
+    name: 'Port',
+    location: 'Singapore',
+    timestamp: '2024-03-18 14:07 UTC',
+    status: 'completed',
+    verified: true,
+    accentClass: 'accent2',
+  },
+  {
+    name: 'Warehouse',
+    location: 'Rotterdam',
+    timestamp: '2024-03-22 06:41 UTC',
+    status: 'completed',
+    verified: true,
+    accentClass: 'accent3',
+  },
+  {
+    name: 'Distribution',
+    location: 'Berlin',
+    timestamp: 'In transit',
+    status: 'in-transit',
+    verified: false,
+    accentClass: 'accent',
+  },
+  {
+    name: 'Retail',
+    location: 'Paris',
+    timestamp: 'Pending',
+    status: 'pending',
+    verified: false,
+    accentClass: 'accent4',
+  },
+]
+
+const STATUS_DOT: Record<Checkpoint['status'], string> = {
+  completed: 'bg-accent shadow-[0_0_8px_rgba(200,240,96,0.5)]',
+  'in-transit':
+    'bg-accent2 shadow-[0_0_8px_rgba(96,208,240,0.5)] animate-pulse',
+  pending: 'bg-muted/40',
+}
+
+function ProvenanceChain() {
+  return (
+    <div className="w-full">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="relative flex h-1.5 w-1.5">
+          <span
+            className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75"
+          />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
+        </span>
+        <span
+          className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted"
+        >
+          Live Provenance Chain
+        </span>
+      </div>
+
+      {/* Scroll container for mobile */}
+      <div
+        role="list"
+        aria-label="Product journey checkpoints"
+        className="flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {PROVENANCE_CHECKPOINTS.map((cp, i) => (
+          <div key={cp.name} className="flex shrink-0 items-center">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 + i * 0.12, duration: 0.5 }}
+              className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 backdrop-blur-xl transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.04]"
+            >
+              {/* Hover glow */}
+              <div
+                className={`pointer-events-none absolute inset-0 rounded-2xl bg-${cp.accentClass}/[0.03] opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
+              />
+
+              <div className="relative flex items-center gap-2.5">
+                {/* Status dot */}
+                <div className="flex shrink-0 items-center justify-center">
+                  <div className={`h-2 w-2 rounded-full ${STATUS_DOT[cp.status]}`} />
+                </div>
+
+                {/* Name + meta */}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="h-2.5 w-2.5 shrink-0 text-muted/60" />
+                    <span className="text-xs font-medium text-text">
+                      {cp.name}
+                    </span>
+                    <span className="text-[10px] text-muted/60">
+                      {cp.location}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-1.5">
+                    <span className="font-mono text-[9px] text-muted/50">
+                      {cp.timestamp}
+                    </span>
+                    {cp.verified && (
+                      <span className="flex items-center gap-0.5 text-[9px] text-accent/70">
+                        <CheckCircle2 className="h-2.5 w-2.5" />
+                        Verified
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Connector line between checkpoints */}
+            {i < PROVENANCE_CHECKPOINTS.length - 1 && (
+              <div className="relative mx-1 hidden h-px w-6 shrink-0 sm:block">
+                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-white/5" />
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{
+                    delay: 0.7 + i * 0.15,
+                    duration: 0.6,
+                    ease: 'easeOut',
+                  }}
+                  className="absolute inset-0 origin-left bg-gradient-to-r from-accent/40 to-accent2/40"
+                />
+                <motion.span
+                  aria-hidden="true"
+                  animate={{
+                    opacity: [0, 1, 0],
+                    x: ['-4px', '24px'],
+                  }}
+                  transition={{
+                    duration: 2.4,
+                    delay: i * 0.4,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                  className="absolute -top-px h-px w-3 bg-accent/80"
+                />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ── Animated hero banner (background) ─────────────────────────── */
 
 function AnimatedHeroBanner() {
   const routePulses = [
@@ -117,6 +293,8 @@ function AnimatedHeroBanner() {
   )
 }
 
+/* ── Main hero section ─────────────────────────────────────────── */
+
 export default function PremiumHero() {
   const navigate = useNavigate()
 
@@ -175,7 +353,7 @@ export default function PremiumHero() {
           with blockchain-powered provenance.
         </motion.p>
 
-        {/* CTA Buttons */}
+        {/* CTA Buttons — Verify Product is primary */}
         <motion.div
           custom={0.3}
           initial="hidden"
@@ -184,21 +362,32 @@ export default function PremiumHero() {
           className="mt-8 flex flex-col items-center gap-4 sm:flex-row"
         >
           <button
-            onClick={() => navigate('/products')}
+            onClick={() => navigate('/verify')}
             className="group inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-accent/90 to-accent2/80 px-8 py-3.5 text-sm font-semibold text-bg shadow-[0_0_30px_rgba(200,240,96,0.2)] transition-all hover:shadow-[0_0_40px_rgba(200,240,96,0.35)] hover:scale-[1.02]"
           >
-            Explore Now
+            Verify Product
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </button>
           <button
-            onClick={() => navigate('/verify')}
+            onClick={() => navigate('/products')}
             className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/[0.03] px-8 py-3.5 text-sm font-medium text-text backdrop-blur-xl transition-all hover:border-white/30 hover:bg-white/[0.06]"
           >
             <Play className="h-3.5 w-3.5 fill-current" />
-            Verify Product
+            View Dashboard
           </button>
         </motion.div>
       </div>
+
+      {/* Provenance Chain Visualization */}
+      <motion.div
+        custom={0.4}
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        className="relative z-10 mt-12 max-w-4xl"
+      >
+        <ProvenanceChain />
+      </motion.div>
 
       {/* Bottom Feature Bar */}
       <motion.div
@@ -206,7 +395,7 @@ export default function PremiumHero() {
         initial="hidden"
         animate="visible"
         variants={fadeIn}
-        className="relative z-10 mt-20 grid max-w-2xl grid-cols-1 gap-6 border-t border-white/5 pt-8 sm:grid-cols-3"
+        className="relative z-10 mt-12 grid max-w-2xl grid-cols-1 gap-6 border-t border-white/5 pt-8 sm:grid-cols-3"
       >
         {[
           {
