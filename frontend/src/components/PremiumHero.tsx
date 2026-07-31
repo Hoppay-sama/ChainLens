@@ -316,7 +316,7 @@ export default function PremiumHero() {
         >
           <BrandLogo className="h-11 w-11" label="Veritras provenance mark" />
           <span className="inline-block h-px w-4 bg-accent" />
-          <span className="text-[11px] font-medium uppercase tracking-[0.25em] text-accent">
+          <span className="text-xs font-medium uppercase tracking-[0.25em] text-accent">
             Where Transparency Becomes Reality
           </span>
         </motion.div>

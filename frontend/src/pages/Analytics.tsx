@@ -1,7 +1,8 @@
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useKPIData, useAnomalies, useBottlenecks, exportAnalytics } from '@/hooks/useApi'
+import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 import { Download, AlertTriangle, TrendingUp, Clock, Route, AlertCircle } from 'lucide-react'
 import {
   BarChart,
@@ -49,8 +50,9 @@ export default function Analytics() {
   const handleExport = async (format: 'csv' | 'pdf') => {
     try {
       await exportAnalytics(format)
+      toast.success(`Exported ${format.toUpperCase()} successfully`)
     } catch {
-      alert('Export failed. Please try again.')
+      toast.error('Export failed. Please try again.')
     }
   }
 
@@ -61,7 +63,7 @@ export default function Analytics() {
         <div className="space-y-3">
           <div className="flex items-center gap-4">
             <div className="h-px w-8 bg-accent/40" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent/60">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent/60">
               Insights
             </span>
           </div>
@@ -86,8 +88,25 @@ export default function Analytics() {
 
       {/* ─── Loading State ─────────────────────────────────────────── */}
       {isLoading && (
-        <div className="flex items-center justify-center py-16">
-          <LoadingSpinner size="lg" />
+        <div
+          aria-label="Loading"
+          role="status"
+          className="grid grid-cols-1 gap-4 lg:grid-cols-2"
+        >
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-2xl"
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="h-5 w-32 animate-pulse rounded bg-white/[0.06]" />
+                  <div className="h-3 w-48 animate-pulse rounded bg-white/[0.04]" />
+                </div>
+              </div>
+              <div className="h-[300px] animate-pulse rounded-xl bg-white/[0.03]" />
+            </div>
+          ))}
         </div>
       )}
 
@@ -109,122 +128,140 @@ export default function Analytics() {
           {/* ─── Charts Grid ───────────────────────────────────────── */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {/* Shipment Volume by Route */}
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-2xl">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-text">Volume by Route</h2>
-                  <p className="text-sm text-muted/60">Shipment count per trade lane</p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0, ease: [0.23, 1, 0.32, 1] }}
+            >
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-2xl transition-all duration-200 ease-out hover:border-white/[0.1]">
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h2 className="font-semibold text-text">Volume by Route</h2>
+                    <p className="text-sm text-muted/60">Shipment count per trade lane</p>
+                  </div>
+                  <Route className="h-5 w-5 text-muted/30" />
                 </div>
-                <Route className="h-5 w-5 text-muted/30" />
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={volumeData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                      <XAxis dataKey="route" stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'rgba(10,10,10,0.9)',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          backdropFilter: 'blur(20px)',
+                        }}
+                        itemStyle={{ color: '#f0ece4' }}
+                      />
+                      <Bar dataKey="volume" fill="#c8f060" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={volumeData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                    <XAxis dataKey="route" stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'rgba(10,10,10,0.9)',
-                        border: '1px solid rgba(255,255,255,0.06)',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        backdropFilter: 'blur(20px)',
-                      }}
-                      itemStyle={{ color: '#f0ece4' }}
-                    />
-                    <Bar dataKey="volume" fill="#c8f060" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            </motion.div>
 
             {/* Bottleneck Distribution */}
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-2xl">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-text">Bottleneck Locations</h2>
-                  <p className="text-sm text-muted/60">Incident count by location</p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
+            >
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-2xl transition-all duration-200 ease-out hover:border-white/[0.1]">
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h2 className="font-semibold text-text">Bottleneck Locations</h2>
+                    <p className="text-sm text-muted/60">Incident count by location</p>
+                  </div>
+                  <Clock className="h-5 w-5 text-muted/30" />
                 </div>
-                <Clock className="h-5 w-5 text-muted/30" />
+                <div className="flex h-[300px] items-center">
+                  {bottleneckPieData.length === 0 ? (
+                    <p className="w-full text-center text-sm text-muted">No bottleneck data available.</p>
+                  ) : (
+                    <>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={bottleneckPieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={100}
+                            paddingAngle={4}
+                            dataKey="value"
+                          >
+                            {bottleneckPieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: 'rgba(10,10,10,0.9)',
+                              border: '1px solid rgba(255,255,255,0.06)',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              backdropFilter: 'blur(20px)',
+                            }}
+                            itemStyle={{ color: '#f0ece4' }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="space-y-2">
+                        {bottleneckPieData.map((item) => (
+                          <div key={item.name} className="flex items-center gap-2 text-xs">
+                            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                            <span className="text-muted">{item.name}</span>
+                            <span className="font-mono text-text">{item.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="flex h-[300px] items-center">
-                {bottleneckPieData.length === 0 ? (
-                  <p className="w-full text-center text-sm text-muted">No bottleneck data available.</p>
-                ) : (
-                  <>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={bottleneckPieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
-                          paddingAngle={4}
-                          dataKey="value"
-                        >
-                          {bottleneckPieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: 'rgba(10,10,10,0.9)',
-                            border: '1px solid rgba(255,255,255,0.06)',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            backdropFilter: 'blur(20px)',
-                          }}
-                          itemStyle={{ color: '#f0ece4' }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="space-y-2">
-                      {bottleneckPieData.map((item) => (
-                        <div key={item.name} className="flex items-center gap-2 text-xs">
-                          <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
-                          <span className="text-muted">{item.name}</span>
-                          <span className="font-mono text-text">{item.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+            </motion.div>
 
             {/* Transit Time by Route */}
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-2xl">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-text">Transit Time by Route</h2>
-                  <p className="text-sm text-muted/60">Average delay in days</p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            >
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-2xl transition-all duration-200 ease-out hover:border-white/[0.1]">
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h2 className="font-semibold text-text">Transit Time by Route</h2>
+                    <p className="text-sm text-muted/60">Average delay in days</p>
+                  </div>
+                  <TrendingUp className="h-5 w-5 text-muted/30" />
                 </div>
-                <TrendingUp className="h-5 w-5 text-muted/30" />
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={volumeData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
+                      <XAxis type="number" stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis dataKey="route" type="category" stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} width={60} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'rgba(10,10,10,0.9)',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          backdropFilter: 'blur(20px)',
+                        }}
+                        itemStyle={{ color: '#f0ece4' }}
+                        formatter={(value: number) => [`${value} days`, 'Avg Delay']}
+                      />
+                      <Bar dataKey="delay" fill="#60d0f0" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={volumeData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
-                    <XAxis type="number" stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis dataKey="route" type="category" stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} width={60} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'rgba(10,10,10,0.9)',
-                        border: '1px solid rgba(255,255,255,0.06)',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        backdropFilter: 'blur(20px)',
-                      }}
-                      itemStyle={{ color: '#f0ece4' }}
-                      formatter={(value: number) => [`${value} days`, 'Avg Delay']}
-                    />
-                    <Bar dataKey="delay" fill="#60d0f0" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            </motion.div>
 
             {/* Anomaly Table */}
             <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-2xl">

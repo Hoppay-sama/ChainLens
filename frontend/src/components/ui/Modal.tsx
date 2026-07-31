@@ -14,14 +14,14 @@ export default function Modal({ open, onClose, title, children, className }: Mod
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-[fadeIn_200ms_ease-out]"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
         className={cn(
-          'w-full max-w-lg rounded-card border border-border bg-surface p-6 shadow-card',
+          'w-full max-w-lg rounded-card border border-border bg-surface p-6 shadow-card animate-[modalEnter_250ms_cubic-bezier(0.23,1,0.32,1)]',
           className
         )}
         onClick={(e) => e.stopPropagation()}

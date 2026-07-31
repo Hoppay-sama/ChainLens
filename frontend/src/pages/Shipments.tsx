@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { toHex, pad } from 'viem'
 import { useAccount } from 'wagmi'
 import Button from '@/components/ui/Button'
@@ -261,7 +262,7 @@ export default function Shipments() {
         <div className="space-y-3">
           <div className="flex items-center gap-4">
             <div className="h-px w-8 bg-accent/40" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent/60">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent/60">
               Supply Chain
             </span>
           </div>
@@ -351,8 +352,21 @@ export default function Shipments() {
           </div>
         ) : shipments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Package className="h-12 w-12 text-muted/20" />
-            <p className="mt-4 text-sm text-muted">No shipments found</p>
+            <div className="rounded-2xl bg-white/[0.02] p-4 mb-4">
+              <Package className="h-10 w-10 text-muted/30" />
+            </div>
+            <p className="text-sm font-medium text-text">No shipments found</p>
+            <p className="mt-1 text-xs text-muted">
+              {statusFilter !== 'all'
+                ? 'Try changing the status filter or search terms'
+                : 'Create your first shipment to start tracking'}
+            </p>
+            {statusFilter === 'all' && (
+              <Button onClick={openAddModal} className="mt-4 gap-2">
+                <Plus className="h-4 w-4" />
+                Add Your First Shipment
+              </Button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -372,7 +386,7 @@ export default function Shipments() {
                 {shipments.map((shipment) => (
                   <tr
                     key={shipment.id}
-                    className="transition-colors hover:bg-white/[0.02]"
+                    className="transition-colors duration-150 ease-out hover:bg-white/[0.03]"
                   >
                     <td className="px-6 py-4 font-mono text-text">
                       {shipment.shipment_id}
@@ -451,7 +465,12 @@ export default function Shipments() {
 
       {/* ─── Blockchain Action Panel ────────────────────────────────── */}
       {selectedShipment !== null && (
-        <div className="space-y-3">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+          className="space-y-3"
+        >
           {/* Header */}
           <div className="flex items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4 backdrop-blur-2xl">
             <div className="flex items-center gap-3">
@@ -463,7 +482,7 @@ export default function Shipments() {
             </div>
             <button
               onClick={handleClearSelected}
-              className="rounded-lg p-1.5 text-muted/40 transition-colors hover:bg-white/[0.04] hover:text-text"
+              className="rounded-lg p-1.5 text-muted/40 transition-all duration-150 ease-out hover:bg-white/[0.04] hover:text-text active:scale-90"
               aria-label="Close on-chain actions"
             >
               <X className="h-4 w-4" />
@@ -496,7 +515,13 @@ export default function Shipments() {
                 </button>
 
                 {showCheckpointForm && (
-                  <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-4">
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-4">
                     {/* Location */}
                     <div>
                       <label className="mb-1 block text-sm font-medium text-text">
@@ -576,7 +601,8 @@ export default function Shipments() {
                           : 'Submit Checkpoint'}
                       </Button>
                     </div>
-                  </div>
+                    </div>
+                  </motion.div>
                 )}
               </div>
 
@@ -598,7 +624,13 @@ export default function Shipments() {
                 </button>
 
                 {showTransferForm && (
-                  <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-4">
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-4">
                     <div>
                       <label className="mb-1 block text-sm font-medium text-text">
                         New Handler Address <span className="text-red-400">*</span>
@@ -649,12 +681,13 @@ export default function Shipments() {
                           : 'Transfer'}
                       </Button>
                     </div>
-                  </div>
+                    </div>
+                  </motion.div>
                 )}
               </div>
             </div>
           )}
-        </div>
+        </motion.div>
       )}
 
       {/* ─── Add/Edit Modal ────────────────────────────────────────── */}

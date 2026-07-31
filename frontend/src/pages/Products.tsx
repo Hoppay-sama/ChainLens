@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { motion } from 'framer-motion'
 import { toHex, pad } from 'viem'
 import { useAccount } from 'wagmi'
 import Card from '@/components/ui/Card'
@@ -375,7 +376,7 @@ export default function Products() {
         <div className="space-y-3">
           <div className="flex items-center gap-4">
             <div className="h-px w-8 bg-accent/40" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent/60">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent/60">
               Registry
             </span>
           </div>
@@ -445,10 +446,25 @@ export default function Products() {
           </div>
         ) : rawItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Package className="h-12 w-12 text-muted/20" />
-            <p className="mt-4 text-sm text-muted">
-              {serverSearch ? 'No products match your search' : 'No products registered yet'}
+            <div className="rounded-2xl bg-white/[0.02] p-4 mb-4">
+              <Package className="h-10 w-10 text-muted/30" />
+            </div>
+            <p className="text-sm font-medium text-text">
+              {serverSearch
+                ? 'No products match your search'
+                : 'No products registered yet'}
             </p>
+            <p className="mt-1 text-xs text-muted">
+              {serverSearch
+                ? 'Try adjusting your search terms'
+                : 'Register your first product to start tracking its journey'}
+            </p>
+            {!serverSearch && (
+              <Button onClick={openAddModal} className="mt-4 gap-2">
+                <Plus className="h-4 w-4" />
+                Register Product
+              </Button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -482,7 +498,7 @@ export default function Products() {
                 {rawItems.map((item) => (
                   <tr
                     key={item.id}
-                    className="transition-colors hover:bg-white/[0.02]"
+                    className="transition-colors duration-150 ease-out hover:bg-white/[0.03]"
                   >
                     <td className="px-6 py-4 font-mono text-text">
                       {item.product_id}
@@ -553,7 +569,7 @@ export default function Products() {
       <div className="space-y-3 pt-4">
         <div className="flex items-center gap-4">
           <div className="h-px w-8 bg-accent/40" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent/60">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent/60">
             Search
           </span>
         </div>
@@ -668,7 +684,16 @@ export default function Products() {
                 </button>
 
                 {showCheckpointForm && (
-                  <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-4">
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    transition={{
+                      duration: 0.25,
+                      ease: [0.23, 1, 0.32, 1],
+                    }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-4">
                     {/* Location */}
                     <div>
                       <label className="mb-1 block text-sm font-medium text-text">
@@ -734,6 +759,7 @@ export default function Products() {
                       </Button>
                     </div>
                   </div>
+                  </motion.div>
                 )}
               </div>
 
@@ -755,7 +781,16 @@ export default function Products() {
                 </button>
 
                 {showTransferForm && (
-                  <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-4">
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    transition={{
+                      duration: 0.25,
+                      ease: [0.23, 1, 0.32, 1],
+                    }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-4">
                     <div>
                       <label className="mb-1 block text-sm font-medium text-text">
                         New Handler Address <span className="text-red-400">*</span>
@@ -792,6 +827,7 @@ export default function Products() {
                       </Button>
                     </div>
                   </div>
+                  </motion.div>
                 )}
               </div>
             </div>
@@ -810,8 +846,18 @@ export default function Products() {
               ) : (
                 <div className="relative space-y-0">
                   <div className="absolute left-[19px] top-2 bottom-2 w-px bg-white/[0.06]" />
-                  {history.map((checkpoint) => (
-                    <div key={checkpoint.id} className="relative flex gap-4 pb-8 last:pb-0">
+                  {history.map((checkpoint, index) => (
+                    <motion.div
+                      key={checkpoint.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.4,
+                        delay: index * 0.06,
+                        ease: [0.23, 1, 0.32, 1],
+                      }}
+                    >
+                    <div className="relative flex gap-4 pb-8 last:pb-0">
                       <div
                         className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 ${
                           checkpoint.status === '3'
@@ -846,6 +892,7 @@ export default function Products() {
                         </p>
                       </div>
                     </div>
+                    </motion.div>
                   ))}
                 </div>
               )}

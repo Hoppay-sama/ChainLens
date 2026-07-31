@@ -156,7 +156,7 @@ export default function Dashboard() {
         >
           <div className="flex items-center gap-3 mb-2">
             <span className="inline-block h-px w-6 bg-accent" />
-            <span className="text-[11px] font-medium uppercase tracking-[0.25em] text-accent">
+            <span className="text-xs font-medium uppercase tracking-[0.25em] text-accent">
               Overview
             </span>
           </div>
@@ -261,7 +261,7 @@ export default function Dashboard() {
                     <div className="relative">
                       <div className="flex items-start justify-between">
                         <div className="space-y-2">
-                          <p className="text-[11px] font-medium uppercase tracking-wider text-muted">{kpi.label}</p>
+                          <p className="text-xs font-medium uppercase tracking-wider text-muted">{kpi.label}</p>
                           <p className="font-mono text-3xl font-medium text-text">
                             {kpi.value}
                           </p>
