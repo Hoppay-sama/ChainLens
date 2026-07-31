@@ -135,6 +135,29 @@ export default function Layout() {
           <Outlet />
         </Suspense>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-white/[0.04] bg-bg/60 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-6 py-8 sm:flex-row sm:justify-between sm:px-12 lg:px-20">
+          <p className="text-xs text-muted/60">
+            &copy; 2026 Veritras. All rights reserved.
+          </p>
+          <nav className="flex items-center gap-6">
+            <NavLink
+              to="/privacy"
+              className="text-xs text-muted/60 transition-colors hover:text-text"
+            >
+              Privacy Policy
+            </NavLink>
+            <NavLink
+              to="/terms"
+              className="text-xs text-muted/60 transition-colors hover:text-text"
+            >
+              Terms &amp; Conditions
+            </NavLink>
+          </nav>
+        </div>
+      </footer>
     </div>
   )
 }

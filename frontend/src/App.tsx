@@ -17,6 +17,8 @@ const Products = lazy(() => import('./pages/Products'))
 const Shipments = lazy(() => import('./pages/Shipments'))
 const AnalyticsPage = lazy(() => import('./pages/Analytics'))
 const Verify = lazy(() => import('./pages/Verify'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const Terms = lazy(() => import('./pages/Terms'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,6 +59,8 @@ function App() {
                   <Route path="/shipments" element={<Shipments />} />
                   <Route path="/analytics" element={<AnalyticsPage />} />
                   <Route path="/verify" element={<Verify />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
                 </Route>
               </Routes>
             </ErrorBoundary>
